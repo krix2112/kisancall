@@ -69,6 +69,7 @@ export default function HomeScreen() {
 
   const navItems = [
     { key: 'home', icon: '🏠', label: 'Home', path: '/' },
+    { key: 'book-slot', icon: '📅', label: 'Book Slot', path: '/book-slot' },
     { key: 'my-slips', icon: '📋', label: 'Slips', path: '/proof' },
     { key: 'speak-call', icon: '🎙', label: 'Speak', path: '/call-history' },
     { key: 'profile', icon: '👤', label: 'Profile', path: '/profile' },
@@ -224,6 +225,22 @@ export default function HomeScreen() {
             </View>
           </View>
         </View>
+
+        {/* Section 4.5: Book New Slot Card */}
+        <TouchableOpacity
+          style={styles.bookSlotCard}
+          onPress={() => router.push('/book-slot')}
+          activeOpacity={0.9}
+        >
+          <View style={styles.bookSlotIconCircle}>
+            <Text style={{ fontSize: 24 }}>📅</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.bookSlotTitle}>नया स्लॉट बुक करें</Text>
+            <Text style={styles.bookSlotSub}>Book a new Mandi procurement slot</Text>
+          </View>
+          <Text style={styles.bookSlotArrow}>→</Text>
+        </TouchableOpacity>
 
         {/* Section 5: Dark Call Button */}
         <TouchableOpacity
@@ -619,6 +636,38 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: colors.inverseOnSurface,
     opacity: 0.8,
+  },
+  bookSlotCard: {
+    backgroundColor: colors.primary,
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 12,
+  },
+  bookSlotIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.primaryContainer,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bookSlotTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#ffffff',
+  },
+  bookSlotSub: {
+    fontSize: 12,
+    color: colors.onPrimaryContainer,
+    marginTop: 2,
+  },
+  bookSlotArrow: {
+    fontSize: 22,
+    color: '#ffffff',
+    fontWeight: '700',
   },
   bottomNav: {
     height: 72,
