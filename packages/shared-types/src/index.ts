@@ -96,3 +96,40 @@ export interface AuditLog {
   new_value?: Record<string, unknown>;
   timestamp: string;
 }
+
+// --- Phase 1 additions ---
+
+/** Row in the user_roles table mapping Supabase Auth users to application roles */
+export interface UserRoleRecord {
+  id: string;
+  auth_user_id: string;
+  role: UserRole;
+  created_at: string;
+}
+
+/** Price data returned from the AGMARKNET adapter */
+export interface PriceEntry {
+  commodity: string;
+  variety: string;
+  min_price: number;
+  max_price: number;
+  modal_price: number;
+  date: string;
+}
+
+/** Response shape for GET /mandis/:id/prices */
+export interface PriceResponse {
+  mandi_id: string;
+  mandi_name: string;
+  prices: PriceEntry[];
+  stale: boolean;
+  fetched_at: string | null;
+  message?: string;
+}
+
+/** Authenticated user attached to req.user after JWT verification */
+export interface AuthenticatedUser {
+  id: string;
+  phone: string;
+  role: UserRole;
+}
