@@ -6,15 +6,14 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
-  Alert,
   StatusBar,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../src/context/AuthContext';
 import { REALTIME_CHANNELS, subscribeToChannel } from '@kisancall/shared-types';
 import { supabase } from '../src/supabase';
 
-// Design tokens matching Stitch design system
 const colors = {
   primary: '#00450d',
   onPrimary: '#ffffff',
@@ -22,32 +21,26 @@ const colors = {
   onPrimaryContainer: '#90d689',
   secondary: '#006e1c',
   onSecondary: '#ffffff',
+  secondaryContainer: '#91f78e',
+  onSecondaryContainer: '#00731e',
+  tertiaryContainer: '#883454',
+  onTertiaryContainer: '#ffaec6',
+  tertiary: '#6b1d3d',
   surface: '#f7fbf1',
   surfaceContainer: '#ecefe6',
   surfaceContainerLow: '#f2f5ec',
+  surfaceContainerHighest: '#e0e4db',
+  surfaceVariant: '#e0e4db',
   onSurface: '#191d17',
   onSurfaceVariant: '#41493e',
   outlineVariant: '#c0c9bb',
-  outline: '#717a6d',
-  background: '#f7fbf1',
-};
-
-const spacing = {
-  xs: 4,
-  sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
-  containerMargin: 16,
-  touchTarget: 48,
+  inverseSurface: '#2d322c',
+  inverseOnSurface: '#eff2e9',
 };
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user, language, signOut } = useAuth();
-
-  const [queuePosition] = useState<number>(14);
-  const [etaMinutes] = useState<number>(45);
+  const { user } = useAuth();
   const [activeNav, setActiveNav] = useState<string>('home');
 
   useEffect(() => {
@@ -69,17 +62,16 @@ export default function HomeScreen() {
   const handleCallKisanCall = () => {
     Alert.alert(
       'KisanCall Voice Assistant',
-      'Dialing KisanCall Toll-Free Voice Assistant line: +91 1800-123-456\n\nOur AI Assistant will answer questions in your language.',
+      'Dialing KisanCall Toll-Free Voice Assistant line: +91 1800-123-456\n\nAsk about slot, queue, price in your language.',
       [{ text: 'OK' }]
     );
   };
 
   const navItems = [
-    { key: 'home', icon: 'home', label: 'Home', path: '/' },
-    { key: 'status', icon: 'hourglass_empty', label: 'Status', path: '/queue-status' },
-    { key: 'price', icon: 'currency_rupee', label: 'Price', path: '/price' },
-    { key: 'history', icon: 'history', label: 'History', path: '/call-history' },
-    { key: 'profile', icon: 'person', label: 'Profile', path: '/profile' },
+    { key: 'home', icon: '🏠', label: 'Home', path: '/' },
+    { key: 'my-slips', icon: '📋', label: 'Slips', path: '/proof' },
+    { key: 'speak-call', icon: '🎙', label: 'Speak', path: '/call-history' },
+    { key: 'profile', icon: '👤', label: 'Profile', path: '/profile' },
   ];
 
   return (
@@ -92,7 +84,7 @@ export default function HomeScreen() {
           <View style={styles.logoBox}>
             <Text style={styles.logoIcon}>🌾</Text>
           </View>
-          <Text style={styles.logoText}>KisanCall</Text>
+          <Text style={styles.brandTitle}>KisanCall</Text>
         </View>
         <View style={styles.avatarBox}>
           <Text style={styles.avatarIcon}>👤</Text>
@@ -104,78 +96,148 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Welcome Header */}
-        <View style={styles.welcomeSection}>
-          <Text style={styles.welcomeTitle}>Namaste, Ram Singh</Text>
-          <Text style={styles.welcomeSubtitle}>नमस्ते, राम सिंह</Text>
-        </View>
-
-        {/* Status Card */}
-        <View style={styles.card}>
-          <View style={styles.cardTopRow}>
-            <View style={styles.cardTopLeft}>
-              <Text style={styles.cardSuperLabel}>Current Status / वर्तमान स्थिति</Text>
-              <Text style={styles.statusHeading}>IN QUEUE</Text>
-              <Text style={styles.statusHeadingHi}>कतार में</Text>
-            </View>
-            <View style={styles.statusIconCircle}>
-              <Text style={styles.statusIconText}>⏳</Text>
-            </View>
-          </View>
-
-          {/* Queue Position & Wait Time */}
-          <View style={styles.queueRow}>
-            <View style={[styles.queueCell, styles.queueCellBorder]}>
-              <Text style={styles.queueCellLabel}>Position / कतार संख्या</Text>
-              <Text style={styles.queueCellValue}>#{queuePosition}</Text>
-            </View>
-            <View style={styles.queueCell}>
-              <Text style={styles.queueCellLabel}>Wait Time / प्रतीक्षा समय</Text>
-              <Text style={styles.queueCellValue}>
-                ~{etaMinutes} <Text style={styles.queueCellUnit}>min</Text>
-              </Text>
-            </View>
-          </View>
-
-          {/* Crop Row */}
-          <View style={styles.cropRow}>
-            <Text style={styles.cropIcon}>🌿</Text>
-            <Text style={styles.cropText}>Wheat (गेहूं) - 50 Quintals</Text>
-          </View>
-        </View>
-
-        {/* Market Price Card */}
-        <View style={[styles.card, styles.cardSpacingTop]}>
-          <View style={styles.priceCardHeader}>
-            <Text style={styles.priceIcon}>₹</Text>
-            <Text style={styles.priceCardTitle}>Market Price / बाज़ार भाव</Text>
-          </View>
-          <View style={styles.priceRow}>
-            <View>
-              <Text style={styles.priceCropName}>Wheat (गेहूं)</Text>
-              <Text style={styles.priceMspLabel}>MSP (न्यूनतम समर्थन मूल्य)</Text>
-            </View>
-            <View style={styles.priceValueContainer}>
-              <Text style={styles.priceValue}>₹2,275</Text>
-              <Text style={styles.priceUnit}>per Quintal / प्रति क्विंटल</Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Bottom padding for FAB + nav */}
-        <View style={{ height: 160 }} />
-      </ScrollView>
-
-      {/* FAB - Call KisanCall */}
-      <View style={styles.fabContainer}>
-        <TouchableOpacity style={styles.fab} onPress={handleCallKisanCall} activeOpacity={0.85}>
-          <Text style={styles.fabIcon}>🎤</Text>
+        {/* Greeting Section */}
+        <View style={styles.greetingRow}>
           <View>
-            <Text style={styles.fabText}>Call KisanCall</Text>
-            <Text style={styles.fabText}>किसान कॉल करें</Text>
+            <Text style={styles.greetingSub}>शुभ प्रभात / Good Morning</Text>
+            <Text style={styles.greetingTitle}>नमस्ते, Ram Singh</Text>
+          </View>
+          <View style={styles.userBadgeCircle}>
+            <Text style={styles.userBadgeIcon}>👤</Text>
+          </View>
+        </View>
+
+        {/* Section 1: Today's Procurement Hero Card */}
+        <View style={styles.procurementCard}>
+          <View style={styles.procurementTop}>
+            <View>
+              <Text style={styles.procurementTitle}>आज की खरीद</Text>
+              <Text style={styles.procurementSub}>Today's Procurement</Text>
+            </View>
+            <View style={styles.queuePill}>
+              <Text style={styles.scheduleIcon}>⏱</Text>
+              <Text style={styles.queuePillText}>कतार में / IN QUEUE</Text>
+            </View>
+          </View>
+
+          {/* Details Column with accent border */}
+          <View style={styles.detailsBox}>
+            <View style={styles.detailItem}>
+              <Text style={styles.detailIcon}>📅</Text>
+              <Text style={styles.detailTextBold}>10:00 – 11:00 AM (Today)</Text>
+            </View>
+            <View style={styles.detailItem}>
+              <Text style={styles.detailIcon}>📍</Text>
+              <Text style={styles.detailText}>Sehore Center</Text>
+            </View>
+            <View style={styles.detailItem}>
+              <Text style={styles.detailIcon}>🌾</Text>
+              <Text style={styles.detailText}>Wheat / गेहूँ</Text>
+            </View>
+          </View>
+
+          {/* Vertical Stage Progress Tracker */}
+          <View style={styles.progressSection}>
+            <Text style={styles.progressHeader}>प्रक्रिया / Progress</Text>
+            <View style={styles.timelineContainer}>
+              <View style={styles.timelineLine} />
+
+              {/* Stage 1 */}
+              <View style={styles.timelineRow}>
+                <View style={styles.timelineCheckCircle}>
+                  <Text style={styles.timelineCheckText}>✓</Text>
+                </View>
+                <Text style={styles.timelineLabelDone}>Booked</Text>
+              </View>
+
+              {/* Stage 2 */}
+              <View style={styles.timelineRow}>
+                <View style={styles.timelineCheckCircle}>
+                  <Text style={styles.timelineCheckText}>✓</Text>
+                </View>
+                <Text style={styles.timelineLabelDone}>Arrived</Text>
+              </View>
+
+              {/* Stage 3 (Active) */}
+              <View style={styles.timelineRow}>
+                <View style={styles.timelineActiveCircle}>
+                  <View style={styles.activeDot} />
+                </View>
+                <Text style={styles.timelineLabelActive}>In Queue</Text>
+              </View>
+
+              {/* Stage 4 */}
+              <View style={styles.timelineRow}>
+                <View style={styles.timelineEmptyCircle} />
+                <Text style={styles.timelineLabelPending}>Procured</Text>
+              </View>
+
+              {/* Stage 5 */}
+              <View style={styles.timelineRow}>
+                <View style={styles.timelineEmptyCircle} />
+                <Text style={styles.timelineLabelPending}>Payment</Text>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Section 2: Your Turn Card (Tertiary Container) */}
+        <View style={styles.yourTurnCard}>
+          <View style={styles.yourTurnLeft}>
+            <Text style={styles.yourTurnHeading}>आपकी बारी / Your Turn</Text>
+            <Text style={styles.yourTurnSub}>13 farmers are ahead of you</Text>
+            <Text style={styles.yourTurnWait}>Estimated Wait: ~45 min</Text>
+          </View>
+          <View style={styles.yourTurnNumberBox}>
+            <Text style={styles.yourTurnHash}>#</Text>
+            <Text style={styles.yourTurnNumber}>14</Text>
+          </View>
+        </View>
+
+        {/* Grid 2-cols: Mandi Price & Payment Status */}
+        <View style={styles.gridRow}>
+          {/* Mandi Price */}
+          <View style={styles.gridCard}>
+            <View>
+              <Text style={styles.cardHeaderTitle}>📈 आज का मंडी भाव</Text>
+              <Text style={styles.cardHeaderSub}>Today's Mandi Price</Text>
+            </View>
+            <View style={styles.priceContent}>
+              <Text style={styles.priceBigText}>₹2,275</Text>
+              <Text style={styles.priceCropText}>Wheat (गेहूँ) / Quintal</Text>
+              <Text style={styles.priceFootnote}>31 Aug 2024 • Govt Mandi Data</Text>
+            </View>
+          </View>
+
+          {/* Payment Status */}
+          <View style={styles.gridCard}>
+            <View>
+              <Text style={styles.cardHeaderTitle}>👛 भुगतान की स्थिति</Text>
+              <Text style={styles.cardHeaderSub}>Payment Status</Text>
+            </View>
+            <View style={styles.paymentContent}>
+              <View style={styles.paymentStatusBadge}>
+                <Text style={styles.syncIcon}>🔄</Text>
+                <Text style={styles.paymentStatusText}>Payment Processing</Text>
+              </View>
+              <Text style={styles.paymentRefText}>Ref: PAY-2024-0812</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Section 5: Dark Call Button */}
+        <TouchableOpacity
+          style={styles.callButton}
+          onPress={handleCallKisanCall}
+          activeOpacity={0.9}
+        >
+          <Text style={styles.callButtonIcon}>📞</Text>
+          <View style={styles.callButtonTexts}>
+            <Text style={styles.callButtonTitle}>KisanCall को कॉल करें</Text>
+            <Text style={styles.callButtonSub}>Ask about slot, queue, price...</Text>
           </View>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
 
       {/* Bottom Navigation */}
       <View style={styles.bottomNav}>
@@ -192,10 +254,7 @@ export default function HomeScreen() {
               activeOpacity={0.7}
             >
               <Text style={[styles.navIcon, isActive && styles.navIconActive]}>
-                {item.key === 'home' ? '🏠' :
-                 item.key === 'status' ? '⏱' :
-                 item.key === 'price' ? '₹' :
-                 item.key === 'history' ? '📋' : '👤'}
+                {item.icon}
               </Text>
               <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>
                 {item.label}
@@ -213,27 +272,20 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.surface,
   },
-
-  // Header
   header: {
     height: 64,
-    paddingHorizontal: spacing.containerMargin,
+    paddingHorizontal: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.outlineVariant + '40',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: 8,
   },
   logoBox: {
     width: 40,
@@ -243,10 +295,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  logoIcon: { fontSize: 20, color: '#fff' },
-  logoText: {
-    fontSize: 24,
-    fontWeight: '600',
+  logoIcon: { fontSize: 20 },
+  brandTitle: {
+    fontSize: 22,
+    fontWeight: '700',
     color: colors.primary,
     letterSpacing: -0.5,
   },
@@ -259,76 +311,33 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarIcon: { fontSize: 16 },
-
-  // Scroll
-  scrollView: { flex: 1, backgroundColor: colors.surface },
+  scrollView: { flex: 1 },
   scrollContent: {
-    paddingHorizontal: spacing.containerMargin,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.xl,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 90,
+    gap: 16,
   },
-
-  // Welcome
-  welcomeSection: {
-    marginBottom: spacing.sm,
-    gap: spacing.xs,
-  },
-  welcomeTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: colors.onSurface,
-    lineHeight: 36,
-  },
-  welcomeSubtitle: {
-    fontSize: 16,
-    fontWeight: '400',
-    color: colors.onSurfaceVariant,
-    lineHeight: 24,
-  },
-
-  // Cards
-  card: {
-    backgroundColor: colors.surfaceContainer,
-    borderRadius: 12,
-    padding: spacing.md,
-    gap: spacing.md,
-    elevation: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 2,
-  },
-  cardSpacingTop: {
-    marginTop: spacing.sm,
-  },
-
-  // Status Card
-  cardTopRow: {
+  greetingRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.surfaceVariant,
   },
-  cardTopLeft: { gap: spacing.xs },
-  cardSuperLabel: {
+  greetingSub: {
     fontSize: 14,
-    fontWeight: '500',
     color: colors.onSurfaceVariant,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    fontWeight: '500',
   },
-  statusHeading: {
+  greetingTitle: {
     fontSize: 20,
     fontWeight: '600',
-    color: colors.primary,
-    lineHeight: 28,
+    color: colors.onSurface,
+    marginTop: 2,
   },
-  statusHeadingHi: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: colors.primary,
-    lineHeight: 28,
-  },
-  statusIconCircle: {
+  userBadgeCircle: {
     width: 48,
     height: 48,
     borderRadius: 24,
@@ -336,181 +345,309 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  statusIconText: { fontSize: 22 },
-
-  // Queue Row
-  queueRow: {
+  userBadgeIcon: { fontSize: 22 },
+  procurementCard: {
+    backgroundColor: colors.surfaceContainerLow,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: colors.surfaceVariant,
+    gap: 16,
+  },
+  procurementTop: {
     flexDirection: 'row',
-    backgroundColor: colors.surface,
-    borderRadius: 8,
-    padding: spacing.sm,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
-  queueCell: {
-    flex: 1,
-    alignItems: 'center',
-    gap: spacing.xs,
-  },
-  queueCellBorder: {
-    borderRightWidth: 1,
-    borderRightColor: colors.outlineVariant + '50',
-  },
-  queueCellLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.onSurfaceVariant,
-    textAlign: 'center',
-  },
-  queueCellValue: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: colors.onSurface,
-    lineHeight: 36,
-  },
-  queueCellUnit: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.onSurfaceVariant,
-  },
-
-  // Crop Row
-  cropRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    marginTop: spacing.xs,
-  },
-  cropIcon: { fontSize: 20, color: colors.secondary },
-  cropText: {
+  procurementTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: colors.onSurface,
-    lineHeight: 20,
   },
-
-  // Price Card
-  priceCardHeader: {
+  procurementSub: {
+    fontSize: 14,
+    color: colors.onSurfaceVariant,
+  },
+  queuePill: {
+    backgroundColor: colors.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
-    paddingBottom: spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.outlineVariant + '50',
+    gap: 4,
   },
-  priceIcon: {
-    fontSize: 22,
-    color: colors.primary,
-    fontWeight: '600',
+  scheduleIcon: { fontSize: 14, color: '#ffffff' },
+  queuePillText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#ffffff',
   },
-  priceCardTitle: {
-    fontSize: 20,
+  detailsBox: {
+    borderLeftWidth: 3,
+    borderLeftColor: colors.primary,
+    paddingLeft: 12,
+    gap: 6,
+  },
+  detailItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  detailIcon: { fontSize: 16 },
+  detailTextBold: {
+    fontSize: 16,
     fontWeight: '600',
     color: colors.onSurface,
-    lineHeight: 28,
   },
-  priceRow: {
+  detailText: {
+    fontSize: 16,
+    color: colors.onSurface,
+  },
+  progressSection: {
+    marginTop: 4,
+  },
+  progressHeader: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.onSurfaceVariant,
+    marginBottom: 12,
+  },
+  timelineContainer: {
+    position: 'relative',
+    gap: 16,
+  },
+  timelineLine: {
+    position: 'absolute',
+    left: 11,
+    top: 12,
+    bottom: 12,
+    width: 2,
+    backgroundColor: colors.surfaceVariant,
+  },
+  timelineRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    height: 24,
+  },
+  timelineCheckCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  timelineCheckText: {
+    fontSize: 12,
+    color: '#ffffff',
+    fontWeight: 'bold',
+  },
+  timelineActiveCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.secondaryContainer,
+    borderWidth: 2,
+    borderColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+  },
+  activeDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.primary,
+  },
+  timelineEmptyCircle: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.surfaceVariant,
+    zIndex: 1,
+  },
+  timelineLabelDone: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: colors.onSurface,
+  },
+  timelineLabelActive: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.onSurface,
+  },
+  timelineLabelPending: {
+    fontSize: 14,
+    color: colors.onSurfaceVariant,
+  },
+  yourTurnCard: {
+    backgroundColor: colors.tertiaryContainer,
+    borderRadius: 16,
+    padding: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    gap: spacing.md,
   },
-  priceCropName: {
+  yourTurnLeft: {
+    gap: 2,
+  },
+  yourTurnHeading: {
     fontSize: 16,
+    fontWeight: '700',
+    color: '#ffffff',
+  },
+  yourTurnSub: {
+    fontSize: 16,
+    color: '#ffaec6',
+  },
+  yourTurnWait: {
+    fontSize: 14,
+    color: '#ffffff',
+    opacity: 0.9,
+    marginTop: 4,
+  },
+  yourTurnNumberBox: {
+    width: 72,
+    height: 72,
+    backgroundColor: colors.surface,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  yourTurnHash: {
+    fontSize: 18,
     fontWeight: '600',
-    color: colors.onSurface,
-    lineHeight: 20,
+    color: colors.tertiary,
   },
-  priceMspLabel: {
-    fontSize: 16,
-    fontWeight: '400',
-    color: colors.onSurfaceVariant,
-    lineHeight: 24,
-    marginTop: spacing.xs,
-  },
-  priceValueContainer: { alignItems: 'flex-end', gap: spacing.xs },
-  priceValue: {
+  yourTurnNumber: {
     fontSize: 28,
     fontWeight: '700',
-    color: colors.primary,
-    lineHeight: 36,
+    color: colors.tertiary,
+    marginTop: -6,
   },
-  priceUnit: {
-    fontSize: 14,
-    fontWeight: '500',
+  gridRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  gridCard: {
+    flex: 1,
+    backgroundColor: colors.surfaceContainer,
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: colors.surfaceVariant,
+    justifyContent: 'space-between',
+  },
+  cardHeaderTitle: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.onSurface,
+  },
+  cardHeaderSub: {
+    fontSize: 12,
     color: colors.onSurfaceVariant,
-    textAlign: 'right',
   },
-
-  // FAB
-  fabContainer: {
-    position: 'absolute',
-    bottom: 96,
-    left: 0,
-    right: 0,
-    paddingHorizontal: spacing.containerMargin,
-    zIndex: 40,
+  priceContent: {
+    marginTop: 12,
   },
-  fab: {
-    backgroundColor: colors.primary,
-    borderRadius: 12,
-    minHeight: 64,
+  priceBigText: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.secondary,
+  },
+  priceCropText: {
+    fontSize: 14,
+    color: colors.onSurfaceVariant,
+  },
+  priceFootnote: {
+    fontSize: 11,
+    color: colors.onSurfaceVariant,
+    opacity: 0.7,
+    marginTop: 6,
+  },
+  paymentContent: {
+    marginTop: 12,
+  },
+  paymentStatusBadge: {
+    backgroundColor: colors.secondaryContainer,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    alignSelf: 'flex-start',
+    marginBottom: 6,
+  },
+  syncIcon: { fontSize: 12 },
+  paymentStatusText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.onSecondaryContainer,
+  },
+  paymentRefText: {
+    fontSize: 13,
+    color: colors.onSurfaceVariant,
+  },
+  callButton: {
+    height: 56,
+    backgroundColor: colors.inverseSurface,
+    borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.md,
-    paddingHorizontal: spacing.md,
-    elevation: 6,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
+    gap: 12,
+    paddingHorizontal: 16,
+    marginTop: 4,
   },
-  fabIcon: { fontSize: 32 },
-  fabText: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: colors.onPrimary,
-    lineHeight: 28,
+  callButtonIcon: {
+    fontSize: 22,
+    color: colors.inverseOnSurface,
   },
-
-  // Bottom Nav
+  callButtonTexts: {
+    alignItems: 'flex-start',
+  },
+  callButtonTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.inverseOnSurface,
+  },
+  callButtonSub: {
+    fontSize: 12,
+    color: colors.inverseOnSurface,
+    opacity: 0.8,
+  },
   bottomNav: {
-    height: 80,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingHorizontal: spacing.sm,
-    backgroundColor: colors.surface + 'F5',
+    height: 72,
+    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: colors.outlineVariant + '30',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
+    borderTopColor: colors.surfaceVariant,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
   },
   navItem: {
-    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 64,
-    height: spacing.touchTarget,
-    gap: 2,
   },
   navIcon: {
     fontSize: 22,
-    color: colors.onSurfaceVariant,
+    opacity: 0.6,
   },
   navIconActive: {
-    color: colors.primary,
+    opacity: 1,
   },
   navLabel: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: '500',
     color: colors.onSurfaceVariant,
-    lineHeight: 18,
+    marginTop: 2,
   },
   navLabelActive: {
-    fontWeight: '600',
     color: colors.primary,
+    fontWeight: '700',
   },
 });
