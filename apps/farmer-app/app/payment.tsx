@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
 
 const PAYMENT_DETAILS = {
   status: 'completed', // 'pending' | 'processing' | 'completed'
@@ -20,6 +21,8 @@ const TIMELINE = [
 ];
 
 export default function PaymentScreen() {
+  const router = useRouter();
+
   const getBadgeStyle = (status: string) => {
     switch (status) {
       case 'completed': return { bg: '#D1FAE5', text: '#065F46', label: '✓ भुगतान सफल / PAID' };
@@ -91,6 +94,14 @@ export default function PaymentScreen() {
             </View>
           ))}
         </View>
+
+        {/* Book Next Mandi Slot CTA */}
+        <TouchableOpacity
+          style={styles.bookSlotBtn}
+          onPress={() => router.push('/book-slot')}
+        >
+          <Text style={styles.bookSlotBtnText}>📅 Book Next Procurement Slot (नया स्लॉट बुक करें)</Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -126,4 +137,17 @@ const styles = StyleSheet.create({
   itemBody: { flex: 1 },
   itemTitle: { fontSize: 13, fontWeight: '600', color: '#1F2937' },
   itemTime: { fontSize: 11, color: '#6B7280', marginTop: 2 },
+  bookSlotBtn: {
+    backgroundColor: '#00450d',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 16,
+    marginBottom: 20,
+  },
+  bookSlotBtnText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
 });

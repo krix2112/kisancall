@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, TouchableOpacity } from 'react-native';
 
+import { useRouter } from 'expo-router';
+
 interface PriceItem {
   commodity: string;
   variety?: string;
@@ -20,6 +22,7 @@ const FALLBACK_PRICES: PriceItem[] = [
 ];
 
 export default function PriceScreen() {
+  const router = useRouter();
   const [prices, setPrices] = useState<PriceItem[]>(FALLBACK_PRICES);
   const [loading, setLoading] = useState<boolean>(false);
   const [isRealData, setIsRealData] = useState<boolean>(false);
@@ -99,12 +102,27 @@ export default function PriceScreen() {
                   <Text style={styles.mspValue}>₹{p.msp} / Qtl</Text>
                 </View>
               ) : null}
+
+              {/* Direct Book Slot Button for this crop */}
+              <TouchableOpacity
+                style={styles.bookSlotCardBtn}
+                onPress={() => router.push('/book-slot')}
+              >
+                <Text style={styles.bookSlotCardBtnText}>📅 Book Slot for {p.commodity.split(' ')[0]} →</Text>
+              </TouchableOpacity>
             </View>
           ))
         )}
 
         <TouchableOpacity style={styles.refreshBtn} onPress={fetchMandiPrices}>
           <Text style={styles.refreshBtnText}>🔄 Refresh Government Rates (ताज़ा भाव देखें)</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.bookSlotFullBtn}
+          onPress={() => router.push('/book-slot')}
+        >
+          <Text style={styles.bookSlotFullBtnText}>📅 Book a Procurement Slot Now (स्लॉट बुक करें)</Text>
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -138,4 +156,23 @@ const styles = StyleSheet.create({
   mspValue: { fontSize: 13, fontWeight: 'bold', color: '#059669' },
   refreshBtn: { backgroundColor: '#065F46', padding: 14, borderRadius: 12, alignItems: 'center', marginTop: 8 },
   refreshBtnText: { color: '#FFFFFF', fontWeight: 'bold', fontSize: 14 },
+  bookSlotCardBtn: {
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    borderRadius: 8,
+    paddingVertical: 8,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  bookSlotCardBtnText: { color: '#047857', fontWeight: '700', fontSize: 12 },
+  bookSlotFullBtn: {
+    backgroundColor: '#00450d',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 12,
+    marginBottom: 20,
+  },
+  bookSlotFullBtnText: { color: '#ffffff', fontWeight: 'bold', fontSize: 15 },
 });

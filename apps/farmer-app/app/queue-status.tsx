@@ -7,6 +7,7 @@ import {
   ScrollView,
   SafeAreaView,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { REALTIME_CHANNELS, subscribeToChannel } from '@kisancall/shared-types';
 import { supabase } from '../src/supabase';
 
@@ -19,6 +20,7 @@ const STAGES = [
 ];
 
 export default function QueueStatusScreen() {
+  const router = useRouter();
   const [position, setPosition] = useState<number>(4);
   const [etaMinutes, setEtaMinutes] = useState<number>(25);
   const [lastRefreshed, setLastRefreshed] = useState<string>(new Date().toLocaleTimeString());
@@ -125,8 +127,13 @@ export default function QueueStatusScreen() {
                 <Text style={styles.stageDesc}>{stage.desc}</Text>
               </View>
             </View>
-          ))}
-        </View>
+        {/* Book Another Slot CTA Button */}
+        <TouchableOpacity
+          style={styles.bookSlotButton}
+          onPress={() => router.push('/book-slot')}
+        >
+          <Text style={styles.bookSlotButtonText}>📅 Book Another Mandi Slot (नया स्लॉट)</Text>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -182,4 +189,16 @@ const styles = StyleSheet.create({
   stageTitle: { fontSize: 15, fontWeight: '600', color: '#374151' },
   stageTitleActive: { color: '#DC2626', fontWeight: 'bold' },
   stageDesc: { fontSize: 12, color: '#6B7280', marginTop: 2 },
+  bookSlotButton: {
+    backgroundColor: '#00450d',
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 20,
+  },
+  bookSlotButtonText: {
+    color: '#ffffff',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
 });

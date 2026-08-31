@@ -177,9 +177,51 @@ export default function ProofScreen() {
                 </TouchableOpacity>
               </View>
             );
-          })}
+          {/* CTA: Book New Slot */}
+          <TouchableOpacity
+            style={styles.bookSlotCtaBtn}
+            onPress={() => router.push('/book-slot')}
+            activeOpacity={0.9}
+          >
+            <Text style={styles.bookSlotCtaIcon}>📅</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.bookSlotCtaTitle}>नया स्लॉट बुक करें</Text>
+              <Text style={styles.bookSlotCtaSub}>Book a new procurement slot</Text>
+            </View>
+            <Text style={styles.bookSlotCtaArrow}>→</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
+
+      {/* Bottom Navigation */}
+      <View style={styles.bottomNav}>
+        {[
+          { key: 'home', icon: '🏠', label: 'Home', path: '/' },
+          { key: 'book-slot', icon: '📅', label: 'Book Slot', path: '/book-slot' },
+          { key: 'my-slips', icon: '📋', label: 'Slips', path: '/proof' },
+          { key: 'speak-call', icon: '🎙', label: 'Speak', path: '/call-history' },
+          { key: 'profile', icon: '👤', label: 'Profile', path: '/profile' },
+        ].map((item) => {
+          const isActive = item.key === 'my-slips';
+          return (
+            <TouchableOpacity
+              key={item.key}
+              style={styles.navItem}
+              onPress={() => {
+                if (item.path !== '/proof') router.push(item.path as any);
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.navIcon, isActive && styles.navIconActive]}>
+                {item.icon}
+              </Text>
+              <Text style={[styles.navLabel, isActive && styles.navLabelActive]}>
+                {item.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
 
       {/* Floating Call Help Button */}
       <View style={styles.floatingHelpContainer}>
@@ -467,5 +509,48 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: colors.onSurface,
+  },
+  bookSlotCtaBtn: {
+    backgroundColor: colors.primary,
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 16,
+  },
+  bookSlotCtaIcon: { fontSize: 24 },
+  bookSlotCtaTitle: { fontSize: 16, fontWeight: '700', color: '#ffffff' },
+  bookSlotCtaSub: { fontSize: 12, color: colors.onPrimaryContainer, marginTop: 2 },
+  bookSlotCtaArrow: { fontSize: 22, color: '#ffffff', fontWeight: '700' },
+  bottomNav: {
+    height: 72,
+    backgroundColor: colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: colors.surfaceVariant,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  navItem: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  navIcon: {
+    fontSize: 22,
+    opacity: 0.6,
+  },
+  navIconActive: {
+    opacity: 1,
+  },
+  navLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: colors.onSurfaceVariant,
+    marginTop: 2,
+  },
+  navLabelActive: {
+    color: colors.primary,
+    fontWeight: '700',
   },
 });
