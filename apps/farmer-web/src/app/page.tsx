@@ -264,92 +264,162 @@ export default function FarmerWebPage() {
 
       {/* LOGIN SECTION (shown if not logged in) */}
       {!isLoggedIn ? (
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-sm space-y-6 max-w-md mx-auto my-8">
-          <div className="text-center space-y-1">
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900">
-              किसान लॉगिन / Farmer Sign In
-            </h2>
-            <p className="text-xs text-slate-500">
-              Enter your registered mobile number to check procurement, slot & payment status
-            </p>
-          </div>
+        <div className="flex flex-col items-center justify-center py-8 px-4">
+          <div className="w-full max-w-[480px] bg-[#ffffff] shadow-sm rounded-xl p-8 lg:p-12 border border-[#717a6d]/10 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[#00450d]/5 rounded-bl-full -mr-16 -mt-16 pointer-events-none" />
 
-          {message && (
-            <div
-              className={`p-3 rounded-lg text-xs text-center font-medium ${
-                message.type === 'error'
-                  ? 'bg-rose-50 border border-rose-200 text-rose-700'
-                  : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
-              }`}
-            >
-              {message.text}
+            {/* Header */}
+            <div className="flex flex-col items-center text-center mb-8">
+              <div className="w-16 h-16 rounded-2xl bg-[#00450d] flex items-center justify-center mb-4 shadow-sm relative overflow-hidden group">
+                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                <span className="material-symbols-outlined text-white text-[32px] relative z-10">potted_plant</span>
+              </div>
+              <h1 className="text-[28px] leading-[36px] font-bold text-[#191d17] mb-2">
+                {step === 'phone' ? 'Kisan Login' : 'OTP Darj Karein'}
+              </h1>
+              <p className="text-[16px] leading-[24px] text-[#41493e] max-w-[300px]">
+                {step === 'phone' ? (
+                  'Apna registered mobile number darj karein'
+                ) : (
+                  <>
+                    Humne <span className="font-semibold text-[#00450d]">+91 {phone || '98765 43210'}</span> par ek 6-digit code bheja hai.
+                  </>
+                )}
+              </p>
             </div>
-          )}
 
-          {step === 'phone' ? (
-            <form onSubmit={handleSendOtp} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  मोबाइल नंबर / Mobile Number
-                </label>
-                <div className="flex rounded-lg border border-slate-300 overflow-hidden focus-within:ring-2 focus-within:ring-emerald-500">
-                  <span className="bg-slate-100 text-slate-600 px-3 py-2.5 text-sm font-semibold flex items-center border-r">
-                    +91
-                  </span>
-                  <input
-                    type="tel"
-                    placeholder="9876543210"
-                    maxLength={10}
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="flex-1 px-3 py-2.5 text-base text-slate-900 focus:outline-none"
-                    required
-                  />
+            {message && (
+              <div
+                className={`p-3 rounded-lg text-xs text-center font-medium mb-4 ${
+                  message.type === 'error'
+                    ? 'bg-[#ffdad6] text-[#93000a]'
+                    : 'bg-[#1b5e20]/10 text-[#00450d]'
+                }`}
+              >
+                {message.text}
+              </div>
+            )}
+
+            {step === 'phone' ? (
+              <form onSubmit={handleSendOtp} className="flex flex-col gap-6">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[14px] font-semibold text-[#191d17]">
+                    मोबाइल नंबर / Mobile Number
+                  </label>
+                  <div className="flex rounded-lg border border-[#717a6d]/30 overflow-hidden focus-within:ring-2 focus-within:ring-[#00450d] bg-[#f7fbf1]">
+                    <span className="bg-[#e0e4db] text-[#191d17] px-4 py-3 text-base font-semibold flex items-center border-r border-[#717a6d]/20">
+                      +91
+                    </span>
+                    <input
+                      type="tel"
+                      placeholder="9876543210"
+                      maxLength={10}
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="flex-1 px-4 py-3 text-lg font-medium text-[#191d17] bg-transparent focus:outline-none"
+                      required
+                    />
+                  </div>
                 </div>
-              </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 rounded-lg transition-colors shadow-sm text-sm disabled:opacity-50"
-              >
-                {loading ? 'Sending OTP...' : 'OTP भेजें / Send OTP'}
-              </button>
-            </form>
-          ) : (
-            <form onSubmit={handleVerifyOtp} className="space-y-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1 text-center">
-                  6-अंकों का ओटीपी दर्ज करें / Enter OTP Code
-                </label>
-                <input
-                  type="text"
-                  placeholder="123456"
-                  maxLength={6}
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  className="w-full border border-slate-300 rounded-lg px-3 py-2.5 text-center text-2xl font-mono tracking-widest text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  required
-                />
-              </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full min-h-[48px] bg-[#00450d] text-white rounded-lg text-[16px] font-semibold flex items-center justify-center gap-2 hover:bg-[#1b5e20] transition-colors relative overflow-hidden group disabled:opacity-50"
+                >
+                  <span className="relative z-10">{loading ? 'Sending...' : 'OTP Bhejein'}</span>
+                  <span className="material-symbols-outlined text-[20px] relative z-10 transition-transform group-hover:translate-x-1">
+                    arrow_forward
+                  </span>
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleVerifyOtp} className="flex flex-col gap-6">
+                <div className="flex flex-col gap-2">
+                  <label className="text-[14px] font-semibold text-[#191d17] text-center">OTP Code</label>
+                  <div className="flex justify-between gap-2 sm:gap-3" id="otp-container">
+                    {[0, 1, 2, 3, 4, 5].map((idx) => (
+                      <input
+                        key={idx}
+                        type="text"
+                        maxLength={1}
+                        inputMode="numeric"
+                        value={otp[idx] || ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const newOtpArr = otp.split('');
+                          newOtpArr[idx] = val;
+                          const newOtpStr = newOtpArr.join('');
+                          setOtp(newOtpStr);
 
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 rounded-lg transition-colors shadow-sm text-sm disabled:opacity-50"
-              >
-                {loading ? 'Verifying...' : 'सत्यापित करें / Verify OTP'}
-              </button>
+                          if (val && e.target.nextElementSibling) {
+                            (e.target.nextElementSibling as HTMLInputElement).focus();
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Backspace' && !otp[idx] && e.currentTarget.previousElementSibling) {
+                            (e.currentTarget.previousElementSibling as HTMLInputElement).focus();
+                          }
+                        }}
+                        className="w-12 h-16 sm:w-14 sm:h-16 text-center text-[24px] font-bold bg-[#f7fbf1] border border-[#717a6d]/20 rounded-lg focus:border-[#00450d] focus:ring-2 focus:ring-[#00450d]/20 outline-none transition-all"
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full min-h-[48px] bg-[#00450d] text-white rounded-lg text-[16px] font-semibold flex items-center justify-center gap-2 hover:bg-[#1b5e20] transition-colors relative overflow-hidden group disabled:opacity-50"
+                >
+                  <span className="relative z-10">{loading ? 'Verifying...' : 'Verify Karein'}</span>
+                  <span className="material-symbols-outlined text-[20px] relative z-10 transition-transform group-hover:translate-x-1">
+                    arrow_forward
+                  </span>
+                </button>
+              </form>
+            )}
+
+            <div className="mt-8 flex flex-col items-center gap-4 border-t border-[#717a6d]/10 pt-6">
+              {step === 'otp' && (
+                <div className="text-center">
+                  <p className="text-[16px] text-[#41493e] mb-1">OTP nahi mila?</p>
+                  <button
+                    type="button"
+                    onClick={() => handleSendOtp({ preventDefault: () => {} } as any)}
+                    className="font-semibold text-[#00450d] hover:underline transition-all text-[16px]"
+                  >
+                    OTP Phir Se Bhejein
+                  </button>
+                </div>
+              )}
+
+              <div className="w-full flex items-center gap-4">
+                <div className="h-px bg-[#717a6d]/10 flex-1" />
+                <span className="text-[14px] font-medium text-[#41493e]">YA</span>
+                <div className="h-px bg-[#717a6d]/10 flex-1" />
+              </div>
 
               <button
                 type="button"
-                onClick={() => setStep('phone')}
-                className="w-full text-xs text-slate-500 hover:underline text-center"
+                onClick={handleRequestCall}
+                className="w-full min-h-[48px] bg-[#ecefe6] border border-[#717a6d]/20 text-[#00450d] rounded-lg text-[16px] font-semibold flex items-center justify-center gap-2 hover:bg-[#e0e4db] transition-colors"
               >
-                ← Back to phone entry
+                <span className="material-symbols-outlined text-[24px]">call</span>
+                Call par OTP sunein
               </button>
-            </form>
-          )}
+
+              {step === 'otp' && (
+                <button
+                  type="button"
+                  onClick={() => setStep('phone')}
+                  className="text-[14px] text-[#41493e] hover:underline mt-2"
+                >
+                  ← Mobile number badlein
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       ) : (
         /* SINGLE-PAGE DASHBOARD STATUS CARD (shown after login) */
