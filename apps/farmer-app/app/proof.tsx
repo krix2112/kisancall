@@ -1,112 +1,471 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  SafeAreaView,
+  StatusBar,
+  Modal,
+} from 'react-native';
+import { useRouter } from 'expo-router';
 
-const PROOF_RECORD = {
-  procurementId: 'PROC-8821',
-  transactionId: 'TX-KSC-2026-0831-8849',
-  payloadHash: '0x8f7c2a1b9e3d4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a',
-  chainTxHash: '0x7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a',
-  timestamp: '31 Aug 2026, 10:15:32 AM',
-  blockNumber: 4892014,
-  network: 'Shardeum Liberty EVM Testnet',
+const colors = {
+  primary: '#00450d',
+  onPrimary: '#ffffff',
+  primaryContainer: '#1b5e20',
+  onPrimaryContainer: '#90d689',
+  secondary: '#006e1c',
+  tertiary: '#6b1d3d',
+  surface: '#f7fbf1',
+  surfaceContainerLow: '#f2f5ec',
+  surfaceContainerLowest: '#ffffff',
+  surfaceContainerHigh: '#e6e9e0',
+  surfaceContainer: '#ecefe6',
+  onSurface: '#191d17',
+  onSurfaceVariant: '#41493e',
+  outlineVariant: '#c0c9bb',
+  inverseSurface: '#2d322c',
 };
 
+interface SlipItem {
+  id: string;
+  crop: string;
+  cropHindi: string;
+  quantity: string;
+  amount: string;
+  date: string;
+  status: 'Paid' | 'Processing';
+  statusHindi: string;
+  tokenCode: string;
+}
+
 export default function ProofScreen() {
-  const [showExplainer, setShowExplainer] = useState(false);
+  const router = useRouter();
+  const [selectedSlip, setSelectedSlip] = useState<SlipItem | null>(null);
+
+  const slips: SlipItem[] = [
+    {
+      id: '1',
+      crop: 'Wheat',
+      cropHindi: 'Gehu',
+      quantity: '25.5 Quintals',
+      amount: '₹58,650',
+      date: '12 May 2024',
+      status: 'Paid',
+      statusHindi: 'भुगतान हो गया',
+      tokenCode: '#KC-8472-91',
+    },
+    {
+      id: '2',
+      crop: 'Chana',
+      cropHindi: 'Gram',
+      quantity: '10.2 Quintals',
+      amount: '₹48,960',
+      date: '10 May 2024',
+      status: 'Processing',
+      statusHindi: 'प्रक्रिया में',
+      tokenCode: '#KC-8472-92',
+    },
+    {
+      id: '3',
+      crop: 'Mustard',
+      cropHindi: 'Sarso',
+      quantity: '15.0 Quintals',
+      amount: '₹84,750',
+      date: '02 May 2024',
+      status: 'Paid',
+      statusHindi: 'भुगतान हो गया',
+      tokenCode: '#KC-8472-88',
+    },
+  ];
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar backgroundColor={colors.surface} barStyle="dark-content" />
+
+      {/* Header Bar */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <View style={styles.logoBox}>
+            <Text style={styles.logoIcon}>🚜</Text>
+          </View>
+          <Text style={styles.brandTitle}>KisanCall</Text>
+        </View>
+        <View style={styles.avatarBox}>
+          <Text style={styles.avatarIcon}>👤</Text>
+        </View>
+      </View>
+
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.title}>डिजिटल प्रमाण / AgroChain Proof</Text>
-        <Text style={styles.subtitle}>Verifiable tamper-proof transaction record on blockchain</Text>
-
-        {/* Proof Hash Card */}
-        <View style={styles.card}>
-          <View style={styles.headerRow}>
-            <Text style={styles.cardTitle}>ब्लॉकचेन रिकॉर्ड / Verified Record</Text>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>✓ VERIFIED ON-CHAIN</Text>
-            </View>
-          </View>
-
-          <View style={styles.row}>
-            <Text style={styles.label}>Transaction ID:</Text>
-            <Text style={styles.valMono}>{PROOF_RECORD.transactionId}</Text>
-          </View>
-
-          <View style={styles.row}>
-            <Text style={styles.label}>Procurement ID:</Text>
-            <Text style={styles.val}>{PROOF_RECORD.procurementId}</Text>
-          </View>
-
-          <View style={styles.hashBox}>
-            <Text style={styles.hashLabel}>Procurement Payload Hash (SHA-256):</Text>
-            <Text style={styles.hashValue}>{PROOF_RECORD.payloadHash}</Text>
-          </View>
-
-          <View style={styles.hashBox}>
-            <Text style={styles.hashLabel}>Shardeum Chain Transaction Hash (TxHash):</Text>
-            <Text style={styles.hashValue}>{PROOF_RECORD.chainTxHash}</Text>
-          </View>
-
-          <View style={styles.row}>
-            <Text style={styles.label}>Timestamp:</Text>
-            <Text style={styles.val}>{PROOF_RECORD.timestamp}</Text>
-          </View>
-
-          <View style={styles.row}>
-            <Text style={styles.label}>Block Number:</Text>
-            <Text style={styles.val}>#{PROOF_RECORD.blockNumber}</Text>
-          </View>
-
-          <View style={styles.row}>
-            <Text style={styles.label}>Network:</Text>
-            <Text style={styles.val}>{PROOF_RECORD.network}</Text>
-          </View>
+        {/* Title Area */}
+        <View style={styles.titleSection}>
+          <Text style={styles.displayTitle}>My Slips</Text>
+          <Text style={styles.displaySubtitle}>मेरी पर्चियां</Text>
         </View>
 
-        {/* Explainer Toggle */}
-        <TouchableOpacity style={styles.explainerButton} onPress={() => setShowExplainer(!showExplainer)}>
-          <Text style={styles.explainerButtonText}>
-            💡 {showExplainer ? 'विवरण छुपाएं / Hide Explainer' : 'इसका क्या मतलब है? / What does this mean?'}
-          </Text>
-        </TouchableOpacity>
+        {/* Slips List */}
+        <View style={styles.listContainer}>
+          {slips.map((item) => {
+            const isPaid = item.status === 'Paid';
+            return (
+              <View
+                key={item.id}
+                style={[styles.slipCard, item.id === '3' && { opacity: 0.8 }]}
+              >
+                {/* Status Row */}
+                <View style={styles.statusRow}>
+                  <View style={styles.statusBadge}>
+                    <Text
+                      style={[
+                        styles.statusIcon,
+                        { color: isPaid ? colors.secondary : colors.tertiary },
+                      ]}
+                    >
+                      {isPaid ? '✓' : '⏱'}
+                    </Text>
+                    <Text
+                      style={[
+                        styles.statusText,
+                        { color: isPaid ? colors.secondary : colors.tertiary },
+                      ]}
+                    >
+                      {item.status} / {item.statusHindi}
+                    </Text>
+                  </View>
+                  <Text style={styles.dateText}>{item.date}</Text>
+                </View>
 
-        {showExplainer && (
-          <View style={styles.explainerCard}>
-            <Text style={styles.explainerTitle}>यह प्रमाण क्यों आवश्यक है? / Why is this proof important?</Text>
-            <Text style={styles.explainerBody}>
-              आपकी उपज की तुलाई, गुणवत्ता जांच और भुगतान विवरण को ब्लॉकचेन टेक्नोलॉजी द्वारा सुरक्षित रूप से दर्ज किया गया है।
-              {"\n\n"}
-              इसका अर्थ है कि कोई भी अधिकारी या ठेकेदार आपकी तौल मात्रा या मूल्य रिकॉर्ड में बाद में बदलाव नहीं कर सकता। आपके पास हमेशा स्थायी एवं सुरक्षित प्रमाण रहेगा।
-            </Text>
-          </View>
-        )}
+                {/* Details */}
+                <View style={styles.detailsRow}>
+                  <View>
+                    <Text style={styles.cropTitle}>
+                      {item.crop} ({item.cropHindi})
+                    </Text>
+                    <Text style={styles.quantityText}>{item.quantity}</Text>
+                  </View>
+                  <Text style={styles.amountText}>{item.amount}</Text>
+                </View>
+
+                {/* Actions */}
+                <TouchableOpacity
+                  style={[
+                    styles.actionBtn,
+                    isPaid
+                      ? { backgroundColor: colors.primaryContainer }
+                      : { backgroundColor: colors.surfaceContainerHigh },
+                  ]}
+                  onPress={() => setSelectedSlip(item)}
+                >
+                  <Text
+                    style={[
+                      styles.actionIcon,
+                      { color: isPaid ? colors.onPrimaryContainer : colors.onSurface },
+                    ]}
+                  >
+                    {isPaid ? '📱' : '🔍'}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.actionBtnText,
+                      { color: isPaid ? colors.onPrimaryContainer : colors.onSurface },
+                    ]}
+                  >
+                    {isPaid ? 'View Digital Slip' : 'Check Status'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            );
+          })}
+        </View>
       </ScrollView>
+
+      {/* Floating Call Help Button */}
+      <View style={styles.floatingHelpContainer}>
+        <TouchableOpacity style={styles.floatingHelpBtn} activeOpacity={0.9}>
+          <Text style={styles.micIcon}>🎙</Text>
+          <Text style={styles.floatingHelpText}>Call KisanCall for Help</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* QR Modal Overlay */}
+      <Modal
+        visible={!!selectedSlip}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setSelectedSlip(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Digital Slip</Text>
+            <Text style={styles.modalSub}>Show this QR code at the mandi</Text>
+
+            {/* QR Code Graphic Box */}
+            <View style={styles.qrContainer}>
+              <View style={styles.qrGrid}>
+                {/* Simulated high-contrast QR pattern */}
+                <View style={[styles.qrCorner, { top: 12, left: 12 }]} />
+                <View style={[styles.qrCorner, { top: 12, right: 12 }]} />
+                <View style={[styles.qrCorner, { bottom: 12, left: 12 }]} />
+                <Text style={styles.qrCenterIcon}>🌾</Text>
+              </View>
+            </View>
+
+            <Text style={styles.modalId}>
+              ID: {selectedSlip?.tokenCode || '#KC-8472-91'}
+            </Text>
+
+            <TouchableOpacity
+              style={styles.closeBtn}
+              onPress={() => setSelectedSlip(null)}
+            >
+              <Text style={styles.closeBtnText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F3F4F6' },
-  scrollContent: { padding: 16 },
-  title: { fontSize: 22, fontWeight: 'bold', color: '#065F46' },
-  subtitle: { fontSize: 13, color: '#4B5563', marginBottom: 16 },
-  card: { backgroundColor: '#FFFFFF', borderRadius: 12, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#E5E7EB' },
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  cardTitle: { fontSize: 15, fontWeight: 'bold', color: '#111827' },
-  badge: { backgroundColor: '#D1FAE5', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
-  badgeText: { fontSize: 10, fontWeight: 'bold', color: '#065F46' },
-  hashBox: { backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', padding: 10, borderRadius: 8, marginVertical: 6 },
-  hashLabel: { fontSize: 11, color: '#64748B', fontWeight: '600' },
-  hashValue: { fontSize: 10, color: '#0F172A', fontFamily: 'monospace', marginTop: 4 },
-  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
-  label: { fontSize: 12, color: '#6B7280' },
-  val: { fontSize: 12, fontWeight: '600', color: '#1E293B' },
-  valMono: { fontSize: 12, fontWeight: 'bold', color: '#047857', fontFamily: 'monospace' },
-  explainerButton: { backgroundColor: '#EFF6FF', borderWidth: 1, borderColor: '#BFDBFE', padding: 14, borderRadius: 10, alignItems: 'center', marginBottom: 12 },
-  explainerButtonText: { color: '#1D4ED8', fontWeight: 'bold', fontSize: 13 },
-  explainerCard: { backgroundColor: '#FEF3C7', borderLeftWidth: 4, borderLeftColor: '#F59E0B', padding: 14, borderRadius: 8 },
-  explainerTitle: { fontSize: 14, fontWeight: 'bold', color: '#92400E', marginBottom: 6 },
-  explainerBody: { fontSize: 12, color: '#78350F', lineHeight: 18 },
+  safeArea: {
+    flex: 1,
+    backgroundColor: colors.surface,
+  },
+  header: {
+    height: 64,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.outlineVariant + '40',
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  logoBox: {
+    width: 40,
+    height: 40,
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoIcon: { fontSize: 20 },
+  brandTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: colors.primary,
+    letterSpacing: -0.5,
+  },
+  avatarBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarIcon: { fontSize: 16 },
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 110,
+  },
+  titleSection: {
+    marginBottom: 16,
+  },
+  displayTitle: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: colors.onSurface,
+  },
+  displaySubtitle: {
+    fontSize: 18,
+    color: colors.onSurfaceVariant,
+    marginTop: 2,
+  },
+  listContainer: {
+    gap: 16,
+  },
+  slipCard: {
+    backgroundColor: colors.surfaceContainerLowest,
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  statusIcon: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  statusText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  dateText: {
+    fontSize: 14,
+    color: colors.onSurfaceVariant,
+  },
+  detailsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    marginBottom: 16,
+  },
+  cropTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: colors.onSurface,
+  },
+  quantityText: {
+    fontSize: 16,
+    color: colors.onSurfaceVariant,
+    marginTop: 2,
+  },
+  amountText: {
+    fontSize: 22,
+    fontWeight: '600',
+    color: colors.primary,
+  },
+  actionBtn: {
+    height: 48,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  actionIcon: {
+    fontSize: 18,
+  },
+  actionBtnText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  floatingHelpContainer: {
+    position: 'absolute',
+    bottom: 24,
+    left: 16,
+    right: 16,
+  },
+  floatingHelpBtn: {
+    height: 48,
+    backgroundColor: colors.primary,
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  micIcon: {
+    fontSize: 20,
+    color: colors.onPrimary,
+  },
+  floatingHelpText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.onPrimary,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 320,
+    backgroundColor: colors.surfaceContainerLowest,
+    borderRadius: 24,
+    padding: 24,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: colors.onSurface,
+    marginBottom: 4,
+  },
+  modalSub: {
+    fontSize: 16,
+    color: colors.onSurfaceVariant,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  qrContainer: {
+    width: 192,
+    height: 192,
+    backgroundColor: colors.surfaceContainer,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  qrGrid: {
+    width: 160,
+    height: 160,
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    borderWidth: 2,
+    borderColor: '#191d17',
+  },
+  qrCorner: {
+    position: 'absolute',
+    width: 32,
+    height: 32,
+    borderWidth: 4,
+    borderColor: '#191d17',
+  },
+  qrCenterIcon: {
+    fontSize: 32,
+  },
+  modalId: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.onSurface,
+    marginBottom: 16,
+  },
+  closeBtn: {
+    width: '100%',
+    height: 48,
+    backgroundColor: colors.surfaceContainerHigh,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeBtnText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.onSurface,
+  },
 });
