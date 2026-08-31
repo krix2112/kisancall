@@ -133,3 +133,69 @@ export interface AuthenticatedUser {
   phone: string;
   role: UserRole;
 }
+
+import { createClient, SupabaseClient, SupabaseClientOptions } from '@supabase/supabase-js';
+
+/**
+ * Reusable Supabase client factory helper shared across KisanCall apps and services.
+ */
+export function createSupabaseClient(
+  url?: string,
+  anonKey?: string,
+  options?: SupabaseClientOptions<any>
+): SupabaseClient {
+  const finalUrl = url || 'https://placeholder.supabase.co';
+  const finalKey = anonKey || 'placeholder-anon-key';
+  return createClient(finalUrl, finalKey, options);
+}
+
+/**
+ * Standardized Supabase Realtime channel naming convention.
+ * - queue:{mandiId} -> Live queue updates for a mandi
+ * - status:{farmerId} -> Individual farmer slot/procurement status updates
+ * - procurement:{procurementId} -> Procurement verification updates
+ * - prices:{mandiId} -> Mandi price cache updates
+ */
+export const REALTIME_CHANNELS = {
+  queue: (mandiId: string) => `queue:${mandiId}`,
+  farmerStatus: (farmerId: string) => `status:${farmerId}`,
+  procurement: (procurementId: string) => `procurement:${procurementId}`,
+  prices: (mandiId: string) => `prices:${mandiId}`,
+};
+
+/**
+ * Reusable Supabase Realtime subscription helper.
+ */
+export function subscribeToChannel(
+  supabaseClient: SupabaseClient,
+  channelName: string,
+  eventConfig: { table: string; filter?: string; event?: 'INSERT' | 'UPDATE' | 'DELETE' | '*' },
+  onData: (payload: any) => void
+) {
+  if (!supabaseClient || typeof supabaseClient.channel !== 'function') {
+    console.warn(`[Realtime Helper] Supabase client unavailable for channel: ${channelName}`);
+    return () => {};
+  }
+
+  const channel = supabaseClient
+    .channel(channelName)
+    .on(
+      'postgres_changes' as any,
+      {
+        event: eventConfig.event || '*',
+        schema: 'public',
+        table: eventConfig.table,
+        filter: eventConfig.filter,
+      },
+      (payload: any) => {
+        console.log(`[Realtime Update] Channel ${channelName}:`, payload);
+        onData(payload);
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabaseClient.removeChannel(channel);
+  };
+}
+

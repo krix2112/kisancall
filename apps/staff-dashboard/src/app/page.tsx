@@ -1,11 +1,127 @@
-import React from 'react';
+'use client';
 
-export default function OverviewPage() {
+import React, { useState } from 'react';
+
+const MOCK_FARMERS = [
+  { id: '1', name: 'Ramesh Kumar', phone: '+91 98765 43210', token: '#KC-8849', slot: '09:00 AM - 12:00 PM', crop: 'Wheat', status: 'In Queue' },
+  { id: '2', name: 'Suresh Verma', phone: '+91 98765 43211', token: '#KC-8850', slot: '09:00 AM - 12:00 PM', crop: 'Paddy', status: 'Arrived' },
+  { id: '3', name: 'Baldev Singh', phone: '+91 98765 43212', token: '#KC-8851', slot: '12:00 PM - 03:00 PM', crop: 'Wheat', status: 'Booked' },
+  { id: '4', name: 'Harpreet Kaur', phone: '+91 98765 43213', token: '#KC-8852', slot: '09:00 AM - 12:00 PM', crop: 'Mustard', status: 'Procured' },
+  { id: '5', name: 'Jagdish Chand', phone: '+91 98765 43214', token: '#KC-8853', slot: '12:00 PM - 03:00 PM', crop: 'Gram', status: 'Paid' },
+];
+
+const CAPACITY_BLOCKS = [
+  { time: '09:00 AM - 12:00 PM', capacity: 50, booked: 50, arrived: 35, color: 'bg-rose-500' },
+  { time: '12:00 PM - 03:00 PM', capacity: 50, booked: 42, arrived: 18, color: 'bg-emerald-500' },
+  { time: '03:00 PM - 06:00 PM', capacity: 50, booked: 28, arrived: 5, color: 'bg-amber-500' },
+];
+
+export default function TodayOverviewPage() {
+  const [farmers] = useState(MOCK_FARMERS);
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'Booked': return 'bg-sky-100 text-sky-800';
+      case 'Arrived': return 'bg-amber-100 text-amber-800';
+      case 'In Queue': return 'bg-rose-100 text-rose-800';
+      case 'Procured': return 'bg-indigo-100 text-indigo-800';
+      case 'Paid': return 'bg-emerald-100 text-emerald-800';
+      default: return 'bg-slate-100 text-slate-800';
+    }
+  };
+
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-slate-800">Today Overview</h1>
-      <div className="bg-white p-6 rounded-lg border shadow-sm">
-        <p className="text-slate-500">TODO: implement Today Overview dashboard metrics and capacity stats.</p>
+    <div className="space-y-8 max-w-7xl mx-auto">
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900">Today Procurement Overview</h1>
+        <p className="text-xs text-slate-500">Live operational metrics for Karnal Central Mandi • 31 Aug 2026</p>
+      </div>
+
+      {/* Metric Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-1">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Slot Bookings</span>
+          <p className="text-2xl font-extrabold text-slate-900">120 <span className="text-xs font-normal text-slate-400">/ 150 Cap</span></p>
+        </div>
+
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-1">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Farmers Arrived</span>
+          <p className="text-2xl font-extrabold text-amber-600">58 <span className="text-xs font-normal text-slate-400">Checked In</span></p>
+        </div>
+
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-1">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Procurement Completed</span>
+          <p className="text-2xl font-extrabold text-indigo-600">34 <span className="text-xs font-normal text-slate-400">Lots Weighed</span></p>
+        </div>
+
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-1">
+          <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">DBT Disbursed</span>
+          <p className="text-2xl font-extrabold text-emerald-600">₹18.45 Lakhs</p>
+        </div>
+      </div>
+
+      {/* Capacity vs Bookings Time Block Breakdown */}
+      <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm space-y-4">
+        <h2 className="text-base font-bold text-slate-900">Mandi Slot Capacity vs Bookings (Today)</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {CAPACITY_BLOCKS.map((block) => (
+            <div key={block.time} className="p-4 bg-slate-50 rounded-lg border border-slate-200 space-y-3">
+              <div className="flex justify-between items-center text-xs">
+                <span className="font-semibold text-slate-700">{block.time}</span>
+                <span className="font-bold text-slate-900">{block.booked} / {block.capacity} Booked</span>
+              </div>
+              <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+                <div
+                  className={`h-full ${block.color}`}
+                  style={{ width: `${(block.booked / block.capacity) * 100}%` }}
+                />
+              </div>
+              <div className="flex justify-between text-[11px] text-slate-500">
+                <span>Arrived: {block.arrived}</span>
+                <span>Available: {block.capacity - block.booked}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Registered Farmers Table */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden space-y-4 p-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-base font-bold text-slate-900">Today Farmer Registration & Slot Ledger</h2>
+          <span className="text-xs text-slate-500 font-mono">Total 5 entries shown</span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs text-slate-700">
+            <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold border-b">
+              <tr>
+                <th className="py-3 px-4">Token #</th>
+                <th className="py-3 px-4">Farmer Name</th>
+                <th className="py-3 px-4">Phone</th>
+                <th className="py-3 px-4">Time Slot</th>
+                <th className="py-3 px-4">Crop</th>
+                <th className="py-3 px-4">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 font-medium">
+              {farmers.map((farmer) => (
+                <tr key={farmer.id} className="hover:bg-slate-50">
+                  <td className="py-3 px-4 font-mono font-bold text-emerald-700">{farmer.token}</td>
+                  <td className="py-3 px-4 text-slate-900 font-semibold">{farmer.name}</td>
+                  <td className="py-3 px-4">{farmer.phone}</td>
+                  <td className="py-3 px-4">{farmer.slot}</td>
+                  <td className="py-3 px-4">{farmer.crop}</td>
+                  <td className="py-3 px-4">
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${getStatusBadge(farmer.status)}`}>
+                      {farmer.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
