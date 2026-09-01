@@ -10,6 +10,8 @@ import { mandiRoutes } from './routes/mandis.js';
 import { staffRoutes } from './routes/staff.js';
 import { voiceToolRoutes } from './routes/voiceTools.js';
 import { voiceWebhookRoutes } from './routes/voiceWebhook.js';
+import { proofEventRoutes } from './routes/proofEvents.js';
+import { startProofQueue } from './services/proofQueue.js';
 
 const fastify = Fastify({ logger: true });
 
@@ -55,100 +57,19 @@ fastify.register(mandiRoutes);
 // ============================================================
 // Phase 2 routes — staff and voice tooling
 // ============================================================
-fastify.register(staffRoutes);
-fastify.register(voiceToolRoutes);
-fastify.register(voiceWebhookRoutes);
+fastify.register(staffRoutes);          // POST /staff/arrivals, POST /staff/procurement, PATCH /payments/:id
+fastify.register(voiceToolRoutes);     // GET /voice/tool/get-slot, get-queue, get-price, get-payment
+fastify.register(voiceWebhookRoutes);  // POST /voice/webhook (501 pending voice-pipeline joint session)
 
 // ============================================================
-// Staff routes — require auth, still 501 (Phase 2 scope)
+// Phase 3 routes — proof events & on-chain anchoring
 // ============================================================
-fastify.post(
-  '/staff/arrivals',
-  { preHandler: [authGuard(['operator', 'supervisor', 'admin'])] },
-  async (_request, reply) => {
-    return reply.status(501).send({
-      error: 'Not Implemented',
-      message: 'POST /staff/arrivals is scheduled for Phase 2',
-    });
-  }
-);
-
-fastify.post(
-  '/staff/procurement',
-  { preHandler: [authGuard(['operator', 'supervisor', 'admin'])] },
-  async (_request, reply) => {
-    return reply.status(501).send({
-      error: 'Not Implemented',
-      message: 'POST /staff/procurement is scheduled for Phase 2',
-    });
-  }
-);
-
-fastify.patch(
-  '/payments/:id',
-  { preHandler: [authGuard(['supervisor', 'admin'])] },
-  async (_request, reply) => {
-    return reply.status(501).send({
-      error: 'Not Implemented',
-      message: 'PATCH /payments/:id is scheduled for Phase 2',
-    });
-  }
-);
+fastify.register(proofEventRoutes);    // POST /proof-events, GET /proof/:id
 
 // ============================================================
-// Voice & Webhook routes — 501 (Phase 2 / voice-pipeline scope)
+// Proof Queue worker — starts immediately when the server starts
 // ============================================================
-fastify.post('/voice/webhook', async (_request, reply) => {
-  return reply.status(501).send({
-    error: 'Not Implemented',
-    message: 'POST /voice/webhook is scheduled for the voice pipeline phase',
-  });
-});
-
-fastify.post('/voice/tool/get-slot', async (_request, reply) => {
-  return reply.status(501).send({
-    error: 'Not Implemented',
-    message: 'POST /voice/tool/get-slot is scheduled for the voice pipeline phase',
-  });
-});
-
-fastify.post('/voice/tool/get-queue', async (_request, reply) => {
-  return reply.status(501).send({
-    error: 'Not Implemented',
-    message: 'POST /voice/tool/get-queue is scheduled for the voice pipeline phase',
-  });
-});
-
-fastify.post('/voice/tool/get-price', async (_request, reply) => {
-  return reply.status(501).send({
-    error: 'Not Implemented',
-    message: 'POST /voice/tool/get-price is scheduled for the voice pipeline phase',
-  });
-});
-
-fastify.post('/voice/tool/get-payment', async (_request, reply) => {
-  return reply.status(501).send({
-    error: 'Not Implemented',
-    message: 'POST /voice/tool/get-payment is scheduled for the voice pipeline phase',
-  });
-});
-
-// ============================================================
-// Proof Events — 501 (AgroChain phase)
-// ============================================================
-fastify.post('/proof-events', async (_request, reply) => {
-  return reply.status(501).send({
-    error: 'Not Implemented',
-    message: 'POST /proof-events is scheduled for the AgroChain phase',
-  });
-});
-
-fastify.get('/proof/:id', async (_request, reply) => {
-  return reply.status(501).send({
-    error: 'Not Implemented',
-    message: 'GET /proof/:id is scheduled for the AgroChain phase',
-  });
-});
+startProofQueue();
 
 // ============================================================
 // Start server

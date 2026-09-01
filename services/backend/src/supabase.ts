@@ -13,10 +13,20 @@ export function validateEnv(): void {
     SUPABASE_URL: process.env.SUPABASE_URL,
     SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
     DATAGOVIN_API_KEY: process.env.DATAGOVIN_API_KEY,
+    PROOF_ANCHOR_CONTRACT_ADDRESS: process.env.PROOF_ANCHOR_CONTRACT_ADDRESS,
+    SHARDEUM_RPC_URL: process.env.SHARDEUM_RPC_URL,
+    PROOF_ANCHOR_WALLET_KEY: process.env.PROOF_ANCHOR_WALLET_KEY,
   };
 
   const missing = Object.entries(required)
-    .filter(([, value]) => !value || value.trim() === '' || value.startsWith('your-'))
+    .filter(([, value]) => {
+      if (!value || value.trim() === '' || value.startsWith('your-')) return true;
+      // Reject the all-zero sentinel address for the contract
+      if (value === '0x0000000000000000000000000000000000000000') return true;
+      // Reject the all-zero private key (zero/dummy key)
+      if (value === '0x0000000000000000000000000000000000000000000000000000000000000000') return true;
+      return false;
+    })
     .map(([key]) => key);
 
   if (missing.length > 0) {

@@ -3,6 +3,7 @@ import { supabase } from '../supabase.js';
 import { authGuard } from '../auth.js';
 import { BookingStatus, ProcurementStatus, PaymentStatus, QualityStatus, Booking, Payment } from '@kisancall/shared-types';
 import { AuthenticatedRequest } from '../auth.js';
+import { enqueueProofEvent } from './proofEvents.js';
 
 /**
  * Staff endpoints — operator/supervisor/admin actions.
@@ -244,10 +245,28 @@ export async function staffRoutes(fastify: FastifyInstance): Promise<void> {
 
       if (procureErr) throw procureErr;
 
-      // TODO: Phase 3 — call proof-event builder here
-      // This integration needs to be tested jointly with AgroChain owners
+      // Enqueue a proof-event for async on-chain anchoring.
+      // This returns 202 with the proof-event id; the proofQueue worker
+      // submits the hash to Shardeum in the background. The staff-facing
+      // response is not blocked on chain confirmation.
+      // If enqueueing fails (e.g. Supabase hiccup), we don't fail the whole
+      // procurement — the row is already in Supabase. The operator can retry
+      // by POSTing /proof-events with the procurement_id again.
+      let proofEventId: string | null = null;
+      try {
+        const proofRow = await enqueueProofEvent(booking_id, 'procurement_completed');
+        proofEventId = proofRow.id;
+      } catch (proofErr) {
+        console.error(
+          `[staff] Failed to enqueue proof-event for procurement ${booking_id}:`,
+          proofErr
+        );
+      }
 
-      return reply.status(201).send(procurement);
+      return reply.status(201).send({
+        ...procurement,
+        proof_event_id: proofEventId,
+      });
     }
   );
 
