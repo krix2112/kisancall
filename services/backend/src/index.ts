@@ -7,6 +7,9 @@ import { authGuard } from './auth.js';
 import { farmerRoutes } from './routes/farmers.js';
 import { bookingRoutes } from './routes/bookings.js';
 import { mandiRoutes } from './routes/mandis.js';
+import { staffRoutes } from './routes/staff.js';
+import { voiceToolRoutes } from './routes/voiceTools.js';
+import { voiceWebhookRoutes } from './routes/voiceWebhook.js';
 
 const fastify = Fastify({ logger: true });
 
@@ -48,6 +51,13 @@ fastify.get('/health', async () => {
 fastify.register(farmerRoutes);
 fastify.register(bookingRoutes);
 fastify.register(mandiRoutes);
+
+// ============================================================
+// Phase 2 routes — staff and voice tooling
+// ============================================================
+fastify.register(staffRoutes);
+fastify.register(voiceToolRoutes);
+fastify.register(voiceWebhookRoutes);
 
 // ============================================================
 // Staff routes — require auth, still 501 (Phase 2 scope)

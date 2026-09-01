@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import { supabase } from '../supabase.js';
+import { computeQueuePosition } from '../services/queueEngine.js';
 
 // Indian mobile phone regex: +91 followed by 6-9 then 9 digits
 const PHONE_REGEX = /^\+91[6-9]\d{9}$/;
@@ -85,90 +86,46 @@ export async function farmerRoutes(fastify: FastifyInstance): Promise<void> {
 
   /**
    * GET /farmers/:id/queue — Live queue position and estimated wait
-   * Real query joining bookings → queue_events. Wait time computed from
-   * actual average service time per procurement, not a hardcoded constant.
+   * Delegates to the shared queue engine so the mobile app and the voice
+   * call always report the exact same position and ETA.
    */
   fastify.get('/farmers/:id/queue', async (request, reply) => {
     const { id } = request.params as { id: string };
 
-    // Find the farmer's active (confirmed) booking
-    const { data: activeBooking, error: bookingErr } = await supabase
-      .from('bookings')
-      .select('id, slot_id, token, status, created_at')
-      .eq('farmer_id', id)
-      .eq('status', 'confirmed')
-      .order('created_at', { ascending: false })
-      .limit(1)
+    // Verify farmer exists
+    const { data: farmer, error: farmerErr } = await supabase
+      .from('farmers')
+      .select('id')
+      .eq('id', id)
       .single();
 
-    if (bookingErr || !activeBooking) {
+    if (farmerErr || !farmer) {
+      return reply.status(404).send({
+        error: 'Not Found',
+        message: 'Farmer not found',
+      });
+    }
+
+    const result = await computeQueuePosition(id);
+
+    if (!result.hasBooking) {
       return reply.status(404).send({
         error: 'Not Found',
         message: 'No active booking found for this farmer',
       });
     }
 
-    // Count confirmed bookings in the same slot created before this one → queue position
-    const { count: positionCount, error: posErr } = await supabase
-      .from('bookings')
-      .select('id', { count: 'exact', head: true })
-      .eq('slot_id', activeBooking.slot_id)
-      .eq('status', 'confirmed')
-      .lt('created_at', activeBooking.created_at);
-
-    if (posErr) throw posErr;
-
-    const position = (positionCount ?? 0) + 1; // 1-indexed
-
-    // Get the latest queue event for this booking
-    const { data: latestEvent } = await supabase
-      .from('queue_events')
-      .select('event_type, timestamp, sequence')
-      .eq('booking_id', activeBooking.id)
-      .order('sequence', { ascending: false })
-      .limit(1)
-      .single();
-
-    // Compute average service time from completed procurements at this mandi
-    // Join through: slot → mandi, then find procurements with timing data
-    const { data: slotData } = await supabase
-      .from('slots')
-      .select('mandi_id')
-      .eq('id', activeBooking.slot_id)
-      .single();
-
-    let avgServiceMinutes: number | null = null;
-
-    if (slotData) {
-      // Get completed procurements for this mandi to compute average service time
-      // We measure time between 'service_start' and 'service_complete' queue events
-      const { data: serviceTimings } = await supabase
-        .rpc('compute_avg_service_time', { p_mandi_id: slotData.mandi_id })
-        .single();
-
-      if (serviceTimings && typeof serviceTimings === 'object' && 'avg_minutes' in serviceTimings) {
-        avgServiceMinutes = (serviceTimings as { avg_minutes: number }).avg_minutes;
-      }
-    }
-
-    // Estimated wait = position * average service time
-    // If we can't compute avg service time (no historical data), return null
-    const estimatedWaitMinutes = avgServiceMinutes !== null
-      ? Math.round(position * avgServiceMinutes)
-      : null;
-
     return reply.send({
       farmer_id: id,
-      booking_id: activeBooking.id,
-      token: activeBooking.token,
-      position,
-      estimated_wait_minutes: estimatedWaitMinutes,
-      latest_event: latestEvent || null,
+      booking_id: result.bookingId,
+      token: result.token,
+      position: result.position,
+      estimated_wait_minutes: result.estimatedWaitMinutes,
+      mandi_name: result.mandiName,
+      latest_event: result.latestEvent || null,
       computed_from: {
-        avg_service_minutes: avgServiceMinutes,
-        note: avgServiceMinutes === null
-          ? 'No historical service data available for this mandi yet'
-          : undefined,
+        avg_service_minutes: result.avgServiceMinutes,
+        note: result.note,
       },
     });
   });

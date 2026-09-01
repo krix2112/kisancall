@@ -134,6 +134,7 @@ export interface AuthenticatedUser {
   role: UserRole;
 }
 
+// --- Supabase helpers (Phase 2) ---
 import { createClient, SupabaseClient, SupabaseClientOptions } from '@supabase/supabase-js';
 
 /**
@@ -199,3 +200,49 @@ export function subscribeToChannel(
   };
 }
 
+// --- Phase 2 additions ---
+
+/** Response for GET /voice/tool/get-slot - returns farmer's next/current booking */
+export interface VoiceGetSlotResponse {
+  has_booking: boolean;
+  booking_id?: string;
+  mandi_name?: string;
+  date?: string;
+  time_window?: string;
+  token_number?: string;
+}
+
+/** Response for GET /voice/tool/get-queue - returns live position and ETA */
+export interface VoiceGetQueueResponse {
+  has_booking: boolean;
+  position?: number;
+  estimated_wait_minutes?: number;
+  mandi_name?: string;
+  token_number?: string;
+  computed_from?: {
+    avg_service_minutes?: number;
+    note?: string;
+  };
+}
+
+/** Response for GET /voice/tool/get-price - wraps Phase 1 priceAdapter with price_date and stale flag */
+export interface VoiceGetPriceResponse {
+  mandi_id: string;
+  mandi_name: string;
+  prices: PriceEntry[];
+  price_date: string;  // Actual date from cache/API response
+  stale: boolean;      // Whether data is stale
+  fetched_at: string | null;
+  message?: string;
+}
+
+/** Response for GET /voice/tool/get-payment - real payment status + amount */
+export interface VoiceGetPaymentResponse {
+  has_payment: boolean;
+  status?: PaymentStatus | 'not_yet_processed';
+  amount?: number;
+  reference?: string;
+  updated_at?: string;
+  procurement_id?: string;
+  booking_id?: string;
+}
