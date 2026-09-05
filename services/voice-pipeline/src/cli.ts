@@ -2,10 +2,6 @@ import readline from 'readline';
 import { handleIncomingCall, executeVoiceTurn } from './index';
 import { sessionManager } from './state/manager';
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-});
 
 async function main() {
   console.log('\n===============================================================');
@@ -20,60 +16,71 @@ async function main() {
   console.log('  :exit     -> Exit test harness\n');
 
   const callId = `SIM-CALL-${Date.now()}`;
-  const farmerPhone = '+919876543210';
+  const farmerPhone = process.env.TEST_FARMER_PHONE || '+919999999999';
+  const defaultFarmerId = process.env.TEST_FARMER_ID || 'd16486e6-0b85-4d03-9778-11498d8e7523';
 
   await handleIncomingCall({ callId, from: farmerPhone });
   const session = sessionManager.getOrCreateSession(callId, farmerPhone);
+  if (defaultFarmerId && (!session.context.farmerId || session.context.farmerId.startsWith('FARMER-'))) {
+    session.context.farmerId = defaultFarmerId;
+  }
 
-  console.log(`[Connected Call] ID: ${callId} | Phone: ${farmerPhone}`);
+  console.log(`[Connected Call] ID: ${callId} | Phone: ${farmerPhone} | Farmer ID: ${session.context.farmerId}`);
   console.log(`[Farmer Profile] Name: ${session.context.name} | Mandi: ${session.context.preferredMandi} | Language: ${session.context.language.toUpperCase()}\n`);
 
-  const promptUser = () => {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    terminal: Boolean(process.stdin.isTTY),
+  });
+
+  const printPrompt = () => {
     const langBadge = session.context.language.toUpperCase();
-    rl.question(`\n[Farmer Speech Input (${langBadge})]: `, async (input) => {
-      const trimmed = input.trim();
-
-      if (!trimmed) {
-        promptUser();
-        return;
-      }
-
-      if (trimmed === ':exit') {
-        console.log('\nEnding call session. Goodbye!');
-        rl.close();
-        process.exit(0);
-      }
-
-      if (trimmed.startsWith(':lang ')) {
-        const newLang = trimmed.split(' ')[1]?.toLowerCase();
-        if (newLang === 'hi' || newLang === 'en') {
-          sessionManager.setLanguage(callId, newLang as 'hi' | 'en');
-          console.log(`\n✓ Switched language to ${newLang.toUpperCase()}`);
-        } else {
-          console.log('\nInvalid language! Use :lang hi or :lang en');
-        }
-        promptUser();
-        return;
-      }
-
-      if (trimmed === ':barge') {
-        sessionManager.handleUserInterruption(callId);
-        promptUser();
-        return;
-      }
-
-      try {
-        const result = await executeVoiceTurn(callId, trimmed);
-        console.log(`[Tools Invoked]: ${result.toolCalls.length ? result.toolCalls.join(', ') : 'None'}`);
-      } catch (err: any) {
-        console.error('[Error processing turn]:', err.message);
-      }
-
-      promptUser();
-    });
+    process.stdout.write(`\n[Farmer Speech Input (${langBadge})]: `);
   };
 
-  promptUser();
+  printPrompt();
+
+  for await (const input of rl) {
+    const trimmed = input.trim();
+
+    if (!trimmed) {
+      printPrompt();
+      continue;
+    }
+
+    if (trimmed === ':exit') {
+      console.log('\nEnding call session. Goodbye!');
+      break;
+    }
+
+    if (trimmed.startsWith(':lang ')) {
+      const newLang = trimmed.split(' ')[1]?.toLowerCase();
+      if (newLang === 'hi' || newLang === 'en') {
+        sessionManager.setLanguage(callId, newLang as 'hi' | 'en');
+        console.log(`\n✓ Switched language to ${newLang.toUpperCase()}`);
+      } else {
+        console.log('\nInvalid language! Use :lang hi or :lang en');
+      }
+      printPrompt();
+      continue;
+    }
+
+    if (trimmed === ':barge') {
+      sessionManager.handleUserInterruption(callId);
+      printPrompt();
+      continue;
+    }
+
+    try {
+      const result = await executeVoiceTurn(callId, trimmed);
+      console.log(`[Tools Invoked]: ${result.toolCalls.length ? result.toolCalls.join(', ') : 'None'}`);
+    } catch (err: any) {
+      console.error('[Error processing turn]:', err.message);
+    }
+
+    printPrompt();
+  }
 }
 
 main().catch((err) => {

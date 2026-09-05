@@ -23,8 +23,23 @@ export const processInboundWebhook = async (payload: TelephonyWebhookPayload) =>
     console.log('[Telephony] Real credentials missing — running in SIMULATION MODE.');
   }
 
+  const BACKEND_URL = process.env.BACKEND_URL || 'http://127.0.0.1:4000';
+  let initialContext: any = null;
+  try {
+    const res = await fetch(`${BACKEND_URL}/voice/webhook`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) {
+      initialContext = await res.json();
+    }
+  } catch (err) {
+    console.warn('[Telephony Receiver] Backend /voice/webhook lookup error:', err);
+  }
+
   // Get or initialize conversation session for this caller
-  const session = sessionManager.getOrCreateSession(callId, callerPhone);
+  const session = sessionManager.getOrCreateSession(callId, callerPhone, initialContext);
 
   return {
     status: 'accepted',

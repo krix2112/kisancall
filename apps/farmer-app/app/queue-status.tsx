@@ -8,53 +8,63 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useAuth } from '../src/context/AuthContext';
 import { REALTIME_CHANNELS, subscribeToChannel } from '@kisancall/shared-types';
 import { supabase } from '../src/supabase';
-
-const STAGES = [
-  { id: '1', title: 'Booked', desc: 'Slot confirmed for 01 Sep', done: true },
-  { id: '2', title: 'Arrived', desc: 'Gate entry verified', done: true },
-  { id: '3', title: 'In Queue', desc: 'Position #4 in weighbridge queue', active: true },
-  { id: '4', title: 'Procured', desc: 'Quality grade & weight entry', done: false },
-  { id: '5', title: 'Paid', desc: 'PFMS DBT payment credited', done: false },
-];
+import { STAGES } from '../src/lib/mockData';
+import { farmerApi } from '../src/services/api';
 
 export default function QueueStatusScreen() {
   const router = useRouter();
-  const [position, setPosition] = useState<number>(4);
-  const [etaMinutes, setEtaMinutes] = useState<number>(25);
+  const { user } = useAuth();
+  const [position, setPosition] = useState<number | null>(null);
+  const [etaMinutes, setEtaMinutes] = useState<number | null>(null);
   const [lastRefreshed, setLastRefreshed] = useState<string>(new Date().toLocaleTimeString());
+  const [token, setToken] = useState<string>('Loading...');
+  const [loading, setLoading] = useState<boolean>(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const fetchQueueData = async () => {
+    try {
+      setLoading(true);
+      setErrorMsg(null);
+      const farmerId = user?.id || '00000000-0000-0000-0000-000000000001';
+      
+      const data = await farmerApi.getQueuePosition(farmerId);
+      setPosition(data.position);
+      setEtaMinutes(data.estimated_wait_minutes);
+      setToken(data.token);
+      setLastRefreshed(new Date().toLocaleTimeString());
+    } catch (err: any) {
+      setErrorMsg(err.message || 'Failed to load queue status');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Realtime queue subscription stub
-    const channelName = REALTIME_CHANNELS.queue('mandi-karnal');
+    fetchQueueData();
+
+    // In a real app we would subscribe to the queue channel for the specific mandi_id
+    // Since we don't have mandi_id readily available in this component without drilling,
+    // we use a simple poll for now or rely on the `status:${farmerId}` channel.
+    const farmerId = user?.id || '00000000-0000-0000-0000-000000000001';
+    const channelName = REALTIME_CHANNELS.farmerStatus(farmerId);
     const unsubscribe = subscribeToChannel(
       supabase,
       channelName,
-      { table: 'queue_events' },
+      { table: 'bookings', filter: `farmer_id=eq.${farmerId}` },
       (payload) => {
-        console.log('[Queue Realtime Event]', payload);
-        if (payload.new?.sequence) {
-          setPosition((prev) => Math.max(1, prev - 1));
-          setEtaMinutes((prev) => Math.max(5, prev - 5));
-        }
+        console.log('[Realtime Farmer Status Update]', payload);
+        fetchQueueData();
       }
     );
 
-    // Auto-refresh interval stub
-    const interval = setInterval(() => {
-      setLastRefreshed(new Date().toLocaleTimeString());
-    }, 15000);
-
-    return () => {
-      unsubscribe();
-      clearInterval(interval);
-    };
+    return () => unsubscribe();
   }, []);
 
   const handleManualRefresh = () => {
-    // Simulate position update
-    setLastRefreshed(new Date().toLocaleTimeString());
+    fetchQueueData();
   };
 
   return (
@@ -68,27 +78,33 @@ export default function QueueStatusScreen() {
           <View style={styles.highlightRow}>
             <View style={styles.metricBox}>
               <Text style={styles.metricLabel}>Your Token</Text>
-              <Text style={styles.metricToken}>#KC-8849</Text>
+              <Text style={styles.metricToken}>{token}</Text>
             </View>
 
             <View style={styles.metricBox}>
               <Text style={styles.metricLabel}>Current Position</Text>
-              <Text style={styles.metricPos}>#{position}</Text>
+              <Text style={styles.metricPos}>{position !== null ? `#${position}` : '-'}</Text>
             </View>
 
             <View style={styles.metricBox}>
               <Text style={styles.metricLabel}>Est. Wait</Text>
-              <Text style={styles.metricEta}>{etaMinutes} mins</Text>
+              <Text style={styles.metricEta}>{etaMinutes !== null ? `${etaMinutes} mins` : 'N/A'}</Text>
             </View>
           </View>
 
           <View style={styles.refreshBar}>
-            <Text style={styles.refreshText}>Synced: {lastRefreshed}</Text>
-            <TouchableOpacity onPress={handleManualRefresh} style={styles.refreshButton}>
+            <Text style={styles.refreshText}>{loading ? 'Refreshing...' : `Synced: ${lastRefreshed}`}</Text>
+            <TouchableOpacity onPress={handleManualRefresh} style={styles.refreshButton} disabled={loading}>
               <Text style={styles.refreshButtonText}>🔄 Refresh</Text>
             </TouchableOpacity>
           </View>
         </View>
+
+        {errorMsg && (
+          <View style={{ backgroundColor: '#FEE2E2', padding: 12, borderRadius: 8, marginBottom: 16 }}>
+            <Text style={{ color: '#991B1B', fontSize: 13, fontWeight: '600' }}>Error: {errorMsg}</Text>
+          </View>
+        )}
 
         {/* Stage Tracker Timeline */}
         <View style={styles.card}>
@@ -127,6 +143,9 @@ export default function QueueStatusScreen() {
                 <Text style={styles.stageDesc}>{stage.desc}</Text>
               </View>
             </View>
+          ))}
+        </View>
+
         {/* Book Another Slot CTA Button */}
         <TouchableOpacity
           style={styles.bookSlotButton}

@@ -11,6 +11,7 @@ import {
   TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useAuth } from '../src/context/AuthContext';
 
 const colors = {
   primary: '#00450d',
@@ -43,74 +44,12 @@ const colors = {
   background: '#f7fbf1',
 };
 
-const CROPS = [
-  { id: 'wheat', titleHindi: 'गेहूँ', titleEng: 'Wheat', icon: '🌾' },
-  { id: 'paddy', titleHindi: 'धान', titleEng: 'Paddy', icon: '🌾' },
-  { id: 'maize', titleHindi: 'मक्का', titleEng: 'Maize', icon: '🌽' },
-];
-
-const MANDIS = [
-  {
-    id: 'sehore',
-    titleHindi: 'सीहोर खरीद केंद्र',
-    titleEng: 'Sehore Procurement Centre',
-    distance: '12 km away',
-    slotsOpen: '15 slots open',
-    recommended: true,
-    available: true,
-  },
-  {
-    id: 'ashta',
-    titleHindi: 'आष्टा कृषि उपज मंडी',
-    titleEng: 'Ashta Krishi Upaj Mandi',
-    distance: '35 km away',
-    slotsOpen: '42 slots open',
-    recommended: false,
-    available: true,
-  },
-  {
-    id: 'ichhawar',
-    titleHindi: 'इच्छावर मंडी',
-    titleEng: 'Ichhawar Mandi',
-    distance: '28 km away',
-    slotsOpen: '0 slots open',
-    recommended: false,
-    available: false,
-  },
-];
-
-const DATES = [
-  { id: 'today', label: 'Today', day: '12', month: 'Nov', active: true },
-  { id: 'tomorrow', label: 'Tomorrow', day: '13', month: 'Nov', active: false },
-  { id: 'thu', label: 'Thu', day: '14', month: 'Nov', active: false },
-];
-
-const SLOTS = [
-  {
-    id: 'slot1',
-    timeEng: '10:00 - 11:00 AM',
-    timeHindi: 'सुबह १० से ११ बजे',
-    status: 'available',
-    statusText: 'Available (24 spots)',
-  },
-  {
-    id: 'slot2',
-    timeEng: '11:00 - 12:00 PM',
-    timeHindi: 'सुबह ११ से दोपहर १२ बजे',
-    status: 'few',
-    statusText: 'Few left (3 spots)',
-  },
-  {
-    id: 'slot3',
-    timeEng: '12:00 - 01:00 PM',
-    timeHindi: 'दोपहर १२ से १ बजे',
-    status: 'full',
-    statusText: 'Full / भरा हुआ',
-  },
-];
+import { CROPS, MANDIS, DATES, SLOTS } from '../src/lib/mockData';
+import { farmerApi } from '../src/services/api';
 
 export default function BookSlotScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const [step, setStep] = useState<number>(1); // 1: Crop, 2: Mandi, 3: Time, 4: Confirm, 5: Success
 
   // State
@@ -119,16 +58,38 @@ export default function BookSlotScreen() {
   const [selectedDate, setSelectedDate] = useState<string>('today');
   const [selectedSlot, setSelectedSlot] = useState<string>('slot1');
   const [mandiSearch, setMandiSearch] = useState<string>('');
+  
+  // API State
+  const [bookingState, setBookingState] = useState<'idle' | 'submitting' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [bookedToken, setBookedToken] = useState<string>('K-104');
 
   const currentCropObj = CROPS.find((c) => c.id === selectedCrop) || CROPS[0];
   const currentMandiObj = MANDIS.find((m) => m.id === selectedMandi) || MANDIS[0];
   const currentSlotObj = SLOTS.find((s) => s.id === selectedSlot) || SLOTS[0];
 
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
     if (step < 4) {
       setStep(step + 1);
     } else if (step === 4) {
-      setStep(5); // Success state
+      try {
+        setBookingState('submitting');
+        setErrorMessage('');
+        
+        // In real app, `selectedSlot` must be a real UUID from GET /mandis/:id/slots
+        // which currently isn't implemented. We'll use a hardcoded valid slot or mock ID.
+        // But for backend testing, we need a UUID. Let's use a dummy UUID.
+        const dummySlotId = '00000000-0000-0000-0000-000000000002';
+        const farmerId = user?.id || '00000000-0000-0000-0000-000000000001';
+        const booking = await farmerApi.createBooking(farmerId, dummySlotId);
+        
+        setBookedToken(booking.token);
+        setBookingState('idle');
+        setStep(5); // Success state
+      } catch (err: any) {
+        setBookingState('error');
+        setErrorMessage(err.message || 'An unexpected error occurred while booking');
+      }
     }
   };
 
@@ -578,6 +539,15 @@ export default function BookSlotScreen() {
               </View>
             </View>
 
+            {/* Error Message */}
+            {bookingState === 'error' && (
+              <View style={{ backgroundColor: colors.errorContainer, padding: 12, borderRadius: 12, marginTop: 16 }}>
+                <Text style={{ color: colors.onErrorContainer, fontSize: 14, fontWeight: '600' }}>
+                  Booking failed: {errorMessage}
+                </Text>
+              </View>
+            )}
+
             {/* Timely Note */}
             <View style={styles.noteBox}>
               <Text style={styles.noteIcon}>ℹ️</Text>
@@ -602,7 +572,7 @@ export default function BookSlotScreen() {
             {/* Token Display Box */}
             <View style={styles.tokenBox}>
               <Text style={styles.tokenLabel}>टोकन नंबर / TOKEN NUMBER</Text>
-              <Text style={styles.tokenNumber}>K-104</Text>
+              <Text style={styles.tokenNumber}>{bookedToken}</Text>
             </View>
 
             {/* Details Summary */}
@@ -666,12 +636,15 @@ export default function BookSlotScreen() {
       {step <= 4 && (
         <View style={styles.fixedBottomBar}>
           <TouchableOpacity
-            style={styles.nextStepBtn}
+            style={[styles.nextStepBtn, bookingState === 'submitting' && { opacity: 0.7 }]}
             onPress={handleNextStep}
             activeOpacity={0.9}
+            disabled={bookingState === 'submitting'}
           >
             <Text style={styles.nextStepBtnText}>
-              {step === 4 ? 'स्लॉट बुक करें / Book Slot' : 'Next Step / आगे बढ़ें'}
+              {bookingState === 'submitting' 
+                ? 'Submitting...' 
+                : step === 4 ? 'स्लॉट बुक करें / Book Slot' : 'Next Step / आगे बढ़ें'}
             </Text>
             <Text style={styles.nextStepBtnIcon}>→</Text>
           </TouchableOpacity>

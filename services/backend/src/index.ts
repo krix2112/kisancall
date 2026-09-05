@@ -8,10 +8,9 @@ import { farmerRoutes } from './routes/farmers.js';
 import { bookingRoutes } from './routes/bookings.js';
 import { mandiRoutes } from './routes/mandis.js';
 import { staffRoutes } from './routes/staff.js';
-import { voiceToolRoutes } from './routes/voiceTools.js';
-import { voiceWebhookRoutes } from './routes/voiceWebhook.js';
-import { proofEventRoutes } from './routes/proofEvents.js';
-import { startProofQueue } from './services/proofQueue.js';
+import { paymentRoutes } from './routes/payments.js';
+import { proofRoutes } from './routes/proof.js';
+import { voiceRoutes } from './routes/voice.js';
 
 const fastify = Fastify({ logger: true });
 
@@ -48,28 +47,21 @@ fastify.get('/health', async () => {
 });
 
 // ============================================================
-// Phase 1 routes — real implementations
+// Core Routes
 // ============================================================
 fastify.register(farmerRoutes);
 fastify.register(bookingRoutes);
 fastify.register(mandiRoutes);
 
-// ============================================================
-// Phase 2 routes — staff and voice tooling
-// ============================================================
-fastify.register(staffRoutes);          // POST /staff/arrivals, POST /staff/procurement, PATCH /payments/:id
-fastify.register(voiceToolRoutes);     // GET /voice/tool/get-slot, get-queue, get-price, get-payment
-fastify.register(voiceWebhookRoutes);  // POST /voice/webhook (501 pending voice-pipeline joint session)
+// Staff & Payment Operations
+fastify.register(staffRoutes);
+fastify.register(paymentRoutes);
 
-// ============================================================
-// Phase 3 routes — proof events & on-chain anchoring
-// ============================================================
-fastify.register(proofEventRoutes);    // POST /proof-events, GET /proof/:id
+// Voice AI & Telephony Webhook Routes
+fastify.register(voiceRoutes);
 
-// ============================================================
-// Proof Queue worker — starts immediately when the server starts
-// ============================================================
-startProofQueue();
+// AgroChain Proof Anchoring Routes
+fastify.register(proofRoutes);
 
 // ============================================================
 // Start server

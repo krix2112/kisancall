@@ -2,8 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
-import { UserRole } from '@kisancall/shared-types';
+import { supabase } from '@/lib/supabase';
 
 export default function StaffLoginPage() {
   const router = useRouter();
@@ -11,7 +10,6 @@ export default function StaffLoginPage() {
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<'phone' | 'otp'>('phone');
-  const [selectedRole, setSelectedRole] = useState<UserRole>('operator');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'error' | 'info'; text: string } | null>(null);
 
@@ -27,38 +25,12 @@ export default function StaffLoginPage() {
 
     const formattedPhone = phone.startsWith('+') ? phone : `+91${phone}`;
 
-    if (!isSupabaseConfigured) {
-      setLoading(false);
-      setMessage({
-        type: 'info',
-        text: 'Supabase environment variables not set. Proceeding in Demo Login mode.',
-      });
-      // Store mock user role in localStorage for RBAC layout guard testing
-      localStorage.setItem('staff_user_role', selectedRole);
-      localStorage.setItem('staff_user_phone', formattedPhone);
-      setStep('otp');
-      return;
-    }
-
     try {
       const { error } = await supabase.auth.signInWithOtp({ phone: formattedPhone });
       setLoading(false);
       if (error) {
-        const isProviderError =
-          error.message.toLowerCase().includes('phone') ||
-          error.message.toLowerCase().includes('provider') ||
-          error.message.toLowerCase().includes('unsupported');
-        if (isProviderError) {
-          localStorage.setItem('staff_user_role', selectedRole);
-          localStorage.setItem('staff_user_phone', formattedPhone);
-          setMessage({ type: 'info', text: '📱 Phone SMS not yet configured — preview mode. Enter any 6 digits to continue.' });
-          setStep('otp');
-        } else {
-          setMessage({ type: 'error', text: error.message });
-        }
+        setMessage({ type: 'error', text: error.message });
       } else {
-        localStorage.setItem('staff_user_role', selectedRole);
-        localStorage.setItem('staff_user_phone', formattedPhone);
         setStep('otp');
         setMessage({ type: 'info', text: `OTP sent to ${formattedPhone}` });
       }
@@ -80,13 +52,6 @@ export default function StaffLoginPage() {
 
     const formattedPhone = phone.startsWith('+') ? phone : `+91${phone}`;
 
-    if (!isSupabaseConfigured) {
-      setLoading(false);
-      localStorage.setItem('staff_authenticated', 'true');
-      router.push('/');
-      return;
-    }
-
     try {
       const { data, error } = await supabase.auth.verifyOtp({
         phone: formattedPhone,
@@ -97,22 +62,8 @@ export default function StaffLoginPage() {
       setLoading(false);
 
       if (error) {
-        const isProviderError =
-          error.message.toLowerCase().includes('phone') ||
-          error.message.toLowerCase().includes('provider') ||
-          error.message.toLowerCase().includes('unsupported') ||
-          error.message.toLowerCase().includes('token');
-        if (isProviderError) {
-          localStorage.setItem('staff_authenticated', 'true');
-          router.push('/');
-        } else {
-          setMessage({ type: 'error', text: error.message });
-        }
+        setMessage({ type: 'error', text: error.message });
       } else {
-        if (data.session) {
-          localStorage.setItem('staff_authenticated', 'true');
-          await supabase.auth.updateUser({ data: { role: selectedRole } });
-        }
         router.push('/');
       }
     } catch (err: any) {
@@ -129,12 +80,6 @@ export default function StaffLoginPage() {
           <p className="text-sm text-slate-500">Mandi Operator & Staff Authentication</p>
         </div>
 
-        {!isSupabaseConfigured && (
-          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800 text-center">
-            ⚠️ Supabase environment variables not configured. Running in preview mode.
-          </div>
-        )}
-
         {message && (
           <div
             className={`p-3 rounded-lg text-xs text-center font-medium ${
@@ -149,21 +94,6 @@ export default function StaffLoginPage() {
 
         {step === 'phone' ? (
           <form onSubmit={handleSendOtp} className="space-y-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">
-                Select Staff Role (for testing RBAC)
-              </label>
-              <select
-                value={selectedRole}
-                onChange={(e) => setSelectedRole(e.target.value as UserRole)}
-                className="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm bg-slate-50 text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              >
-                <option value="operator">Operator (Standard)</option>
-                <option value="supervisor">Supervisor (Payments & Audit)</option>
-                <option value="admin">Admin (Full Access)</option>
-              </select>
-            </div>
-
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1">
                 Staff Mobile Number

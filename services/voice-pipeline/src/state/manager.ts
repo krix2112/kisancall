@@ -37,15 +37,19 @@ export class SessionManager {
    * Initialize or retrieve call session with compact per-call context object.
    * Context is fetched fresh per call (not cached across calls) per §11.2 of the design doc.
    */
-  getOrCreateSession(callId: string, callerPhone: string = '+919876543210'): CallSession {
+  getOrCreateSession(
+    callId: string,
+    callerPhone: string = '+919999999999',
+    initialContext?: Partial<FarmerCallContext>
+  ): CallSession {
     if (!this.sessions.has(callId)) {
       const freshContext: FarmerCallContext = {
-        farmerId: `FARMER-${callerPhone.slice(-4)}`,
-        name: 'Ramesh Kumar',
+        farmerId: initialContext?.farmerId || `FARMER-${callerPhone.slice(-4)}`,
+        name: initialContext?.name || 'Test Farmer',
         phone: callerPhone,
-        language: 'hi', // Default to Hindi, can switch to English
-        preferredMandi: 'Karnal Central Mandi',
-        crop: 'Wheat (गेहूं)',
+        language: initialContext?.language || 'hi',
+        preferredMandi: initialContext?.preferredMandi || 'Karnal Mandi',
+        crop: initialContext?.crop || 'Wheat',
       };
 
       this.sessions.set(callId, {
@@ -55,6 +59,12 @@ export class SessionManager {
         turns: [],
         isPlayingTts: false,
       });
+    } else if (initialContext) {
+      const existing = this.sessions.get(callId)!;
+      existing.context = {
+        ...existing.context,
+        ...initialContext,
+      };
     }
     return this.sessions.get(callId)!;
   }

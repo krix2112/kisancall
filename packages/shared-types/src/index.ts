@@ -21,6 +21,8 @@ export interface Mandi {
   district: string;
   daily_capacity: number;
   working_hours: string;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 export interface Slot {
@@ -60,6 +62,22 @@ export interface Payment {
   status: PaymentStatus;
   reference: string;
   updated_at: string;
+}
+
+export interface EnrichedBooking extends Omit<Booking, 'farmer_id'> {
+  created_at: string;
+  procurement: Pick<Procurement, 'quantity' | 'price' | 'quality_status' | 'status'> | null;
+  payment: Pick<Payment, 'status' | 'reference' | 'updated_at'> | null;
+}
+
+export interface FarmerStatusResponse {
+  farmer: Pick<Farmer, 'id' | 'name' | 'phone'> & {
+    preferred_mandi_id?: string | null;
+    crop?: string | null;
+    mandi?: (Mandi & { latitude?: number | null; longitude?: number | null }) | null;
+  };
+  total_bookings: number;
+  bookings: EnrichedBooking[];
 }
 
 export interface PriceCache {

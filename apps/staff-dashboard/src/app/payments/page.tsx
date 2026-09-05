@@ -2,43 +2,46 @@
 
 import React, { useState } from 'react';
 
-interface PaymentRecord {
-  id: string;
-  procurementId: string;
-  farmerName: string;
-  phone: string;
-  amount: number;
-  status: 'Pending' | 'Processing' | 'Paid';
-  reference: string;
-  updatedAt: string;
-}
-
-const INITIAL_PAYMENTS: PaymentRecord[] = [
-  { id: '1', procurementId: 'PROC-8821', farmerName: 'Ramesh Kumar', phone: '+91 98765 43210', amount: 45500, status: 'Paid', reference: 'PAY-884920-IND', updatedAt: '31 Aug 02:30 PM' },
-  { id: '2', procurementId: 'PROC-8822', farmerName: 'Harpreet Kaur', phone: '+91 98765 43213', amount: 34125, status: 'Processing', reference: 'PFMS-PENDING-99', updatedAt: '31 Aug 11:45 AM' },
-  { id: '3', procurementId: 'PROC-8823', farmerName: 'Jagdish Chand', phone: '+91 98765 43214', amount: 113750, status: 'Pending', reference: '--', updatedAt: '31 Aug 09:15 AM' },
-];
+import { INITIAL_PAYMENTS, PaymentRecord } from '@/lib/mockData';
+import { DataTable } from '@/components/DataTable';
+import { staffApi } from '@/services/api';
 
 export default function PaymentsPage() {
   const [payments, setPayments] = useState<PaymentRecord[]>(INITIAL_PAYMENTS);
   const [filter, setFilter] = useState<'All' | 'Pending' | 'Processing' | 'Paid'>('All');
 
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [errorBanner, setErrorBanner] = useState<string | null>(null);
+
   const filteredPayments = filter === 'All' ? payments : payments.filter((p) => p.status === filter);
 
-  const handleUpdateStatus = (id: string, newStatus: 'Processing' | 'Paid') => {
-    setPayments((prev) =>
-      prev.map((item) => {
-        if (item.id === id) {
-          return {
-            ...item,
-            status: newStatus,
-            reference: newStatus === 'Paid' ? `PAY-${Math.floor(100000 + Math.random() * 900000)}-IND` : 'PFMS-BATCH-INIT',
-            updatedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          };
-        }
-        return item;
-      })
-    );
+  const handleUpdateStatus = async (id: string, newStatus: 'Processing' | 'Paid') => {
+    setLoadingId(id);
+    setErrorBanner(null);
+    try {
+      await staffApi.processPayment(id, { status: newStatus });
+      setPayments((prev) =>
+        prev.map((item) => {
+          if (item.id === id) {
+            return {
+              ...item,
+              status: newStatus,
+              reference: newStatus === 'Paid' ? `PAY-${Math.floor(100000 + Math.random() * 900000)}-IND` : 'PFMS-BATCH-INIT',
+              updatedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            };
+          }
+          return item;
+        })
+      );
+    } catch (err: any) {
+      if (err.message.includes('501')) {
+        setErrorBanner(`MISSING BACKEND CAPABILITY: The backend route PATCH /payments/:id is a stub and returned 501 Not Implemented. Frontend is correctly wired.`);
+      } else {
+        setErrorBanner(`Error: ${err.message}`);
+      }
+    } finally {
+      setLoadingId(null);
+    }
   };
 
   return (
@@ -65,10 +68,18 @@ export default function PaymentsPage() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden p-6 space-y-4">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-700">
-            <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold border-b">
+      {errorBanner && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs font-semibold text-red-800 flex justify-between items-start mb-4">
+          <div className="flex-1">
+            <span className="font-bold block mb-1">⚠️ Error Processing Payment</span>
+            {errorBanner}
+          </div>
+          <button onClick={() => setErrorBanner(null)} className="text-red-600 hover:text-red-900 ml-2">✕</button>
+        </div>
+      )}
+
+      <DataTable>
+        <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold border-b">
               <tr>
                 <th className="py-3 px-4">Procurement ID</th>
                 <th className="py-3 px-4">Farmer Name</th>
@@ -103,18 +114,20 @@ export default function PaymentsPage() {
                   <td className="py-3 px-4 text-right space-x-2">
                     {item.status === 'Pending' && (
                       <button
+                        disabled={loadingId === item.id}
                         onClick={() => handleUpdateStatus(item.id, 'Processing')}
-                        className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold py-1.5 px-3 rounded-lg shadow-sm transition-colors"
+                        className={`text-white text-xs font-semibold py-1.5 px-3 rounded-lg shadow-sm transition-colors ${loadingId === item.id ? 'bg-purple-400' : 'bg-purple-600 hover:bg-purple-700'}`}
                       >
-                        Initiate PFMS
+                        {loadingId === item.id ? '...' : 'Initiate PFMS'}
                       </button>
                     )}
                     {item.status !== 'Paid' && (
                       <button
+                        disabled={loadingId === item.id}
                         onClick={() => handleUpdateStatus(item.id, 'Paid')}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold py-1.5 px-3 rounded-lg shadow-sm transition-colors"
+                        className={`text-white text-xs font-semibold py-1.5 px-3 rounded-lg shadow-sm transition-colors ${loadingId === item.id ? 'bg-emerald-400' : 'bg-emerald-600 hover:bg-emerald-700'}`}
                       >
-                        Mark Paid
+                        {loadingId === item.id ? '...' : 'Mark Paid'}
                       </button>
                     )}
                     {item.status === 'Paid' && (
@@ -124,9 +137,7 @@ export default function PaymentsPage() {
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
-      </div>
+      </DataTable>
     </div>
   );
 }

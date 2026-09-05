@@ -41,65 +41,31 @@ export class GroqLLMClient {
     const utteranceLower = userUtterance.toLowerCase();
     const toolCallsMade: string[] = [];
 
-    // Intent detection and tool dispatch logic (Simulation & Groq tool routing)
-
-    // 1. QUEUE INTENT ("queue", "number", "kab aayega", "wait", "katar", "कतार", "नंबर")
+    // 1. SLOT INTENT ("slot", "booking", "स्लॉट", "बुकिंग")
     if (
-      utteranceLower.includes('queue') ||
-      utteranceLower.includes('number') ||
-      utteranceLower.includes('kab') ||
-      utteranceLower.includes('wait') ||
-      utteranceLower.includes('katar') ||
-      utteranceLower.includes('कतार') ||
-      utteranceLower.includes('नंबर')
+      utteranceLower.includes('slot') ||
+      utteranceLower.includes('book') ||
+      utteranceLower.includes('स्लॉट') ||
+      utteranceLower.includes('बुकिंग')
     ) {
-      toolCallsMade.push('get_queue');
+      toolCallsMade.push('get_slot');
       try {
-        const q = await tools.getQueue(context.farmerId);
+        const s = await tools.getSlot(context.farmerId);
         const text =
           context.language === 'hi'
-            ? `आपका लाइव कतार नंबर ${q.position} है। अनुमानित प्रतीक्षा समय ${q.etaMinutes} मिनट है।`
-            : `Your live queue position is number ${q.position}. Estimated wait time is ${q.etaMinutes} minutes.`;
+            ? `आपका स्लॉट ${s.mandi} में ${s.date} को सुबह ${s.startTime} से ${s.endTime} के लिए ${s.status === 'confirmed' ? 'कन्फर्म' : s.status} है।`
+            : `Your slot is ${s.status} at ${s.mandi} for ${s.date} between ${s.startTime} and ${s.endTime}.`;
         return { text, toolCallsMade, suggestStaffEscalation: false };
       } catch (err) {
         const text =
           context.language === 'hi'
-            ? 'कतार की जानकारी अभी उपलब्ध नहीं है। कृपया मंडी काउंटर पर स्टाफ से संपर्क करें।'
-            : 'Queue information is currently unavailable. Please check with mandi staff.';
+            ? 'स्लॉट विवरण प्राप्त नहीं हो सका। कृपया मंडी ऑपरेटर से मदद लें।'
+            : 'Slot details could not be retrieved. Please check with mandi operator.';
         return { text, toolCallsMade, suggestStaffEscalation: true };
       }
     }
 
-    // 2. PRICE INTENT ("price", "rate", "bhao", "dam", "भाव", "दाम", "कीमत", "wheat", "gehun", "गेहूं")
-    if (
-      utteranceLower.includes('price') ||
-      utteranceLower.includes('bhao') ||
-      utteranceLower.includes('rate') ||
-      utteranceLower.includes('dam') ||
-      utteranceLower.includes('भाव') ||
-      utteranceLower.includes('दाम') ||
-      utteranceLower.includes('कीमत') ||
-      utteranceLower.includes('gehun') ||
-      utteranceLower.includes('गेहूं')
-    ) {
-      toolCallsMade.push('get_price');
-      try {
-        const p = await tools.getPrice(context.preferredMandi, context.crop || 'wheat');
-        const text =
-          context.language === 'hi'
-            ? `31 अगस्त 2026 Agmarknet आंकड़ों के अनुसार ${context.preferredMandi} में गेहूं का औसत मॉडल भाव ₹${p.modalPrice} प्रति क्विंटल है (न्यूनतम ₹${p.minPrice}, अधिकतम ₹${p.maxPrice})।`
-            : `According to 31 August 2026 Agmarknet data, the modal price for wheat at ${context.preferredMandi} is ₹${p.modalPrice} per quintal (min ₹${p.minPrice}, max ₹${p.maxPrice}).`;
-        return { text, toolCallsMade, suggestStaffEscalation: false };
-      } catch (err) {
-        const text =
-          context.language === 'hi'
-            ? 'आज के मंडी भाव डेटा प्राप्त नहीं हो सके। कृपया स्टाफ से पूछें।'
-            : 'Mandi price data could not be fetched. Please consult staff.';
-        return { text, toolCallsMade, suggestStaffEscalation: true };
-      }
-    }
-
-    // 3. PAYMENT INTENT ("payment", "paisa", "paise", "rupaye", "money", "paid", "भुगतान", "पैसा", "रुपये")
+    // 2. PAYMENT INTENT ("payment", "paisa", "paise", "rupaye", "money", "paid", "भुगतान", "पैसा", "रुपये")
     if (
       utteranceLower.includes('payment') ||
       utteranceLower.includes('paisa') ||
@@ -108,11 +74,19 @@ export class GroqLLMClient {
       utteranceLower.includes('rupaye') ||
       utteranceLower.includes('paid') ||
       utteranceLower.includes('भुगतान') ||
-      utteranceLower.includes('पैसा')
+      utteranceLower.includes('पैसा') ||
+      utteranceLower.includes('रुपये')
     ) {
       toolCallsMade.push('get_payment');
       try {
-        const pay = await tools.getPayment('PROC-8821');
+        const pay = await tools.getPayment(context.farmerId);
+        if (pay.status === 'no_payment') {
+          const text =
+            context.language === 'hi'
+              ? 'आपका अभी कोई भुगतान रिकॉर्ड उपलब्ध नहीं है।'
+              : 'No payment record found for you yet.';
+          return { text, toolCallsMade, suggestStaffEscalation: false };
+        }
         const text =
           context.language === 'hi'
             ? `आपकी खरीद का भुगतान ₹${pay.amount.toLocaleString('en-IN')} सफलतापूर्वक पूरा हो गया है। बैंक संदर्भ नंबर ${pay.reference} है।`
@@ -127,29 +101,61 @@ export class GroqLLMClient {
       }
     }
 
-    // 4. SLOT INTENT ("slot", "booking", "time", "date", "aana", "स्लॉट", "समय")
+    // 3. PRICE INTENT ("price", "rate", "bhao", "dam", "भाव", "दाम", "कीमत", "wheat", "gehun", "गेहूं")
     if (
-      utteranceLower.includes('slot') ||
-      utteranceLower.includes('book') ||
-      utteranceLower.includes('time') ||
-      utteranceLower.includes('date') ||
-      utteranceLower.includes('aana') ||
-      utteranceLower.includes('स्लॉट') ||
-      utteranceLower.includes('समय')
+      utteranceLower.includes('price') ||
+      utteranceLower.includes('bhao') ||
+      utteranceLower.includes('rate') ||
+      utteranceLower.includes('dam') ||
+      utteranceLower.includes('भाव') ||
+      utteranceLower.includes('दाम') ||
+      utteranceLower.includes('कीमत') ||
+      utteranceLower.includes('gehun') ||
+      utteranceLower.includes('गेहूं') ||
+      utteranceLower.includes('wheat')
     ) {
-      toolCallsMade.push('get_slot');
+      toolCallsMade.push('get_price');
       try {
-        const s = await tools.getSlot(context.farmerId);
+        const p = await tools.getPrice(context.farmerId, context.crop || 'wheat');
         const text =
           context.language === 'hi'
-            ? `आपका स्लॉट ${s.mandi} में ${s.date} को सुबह ${s.startTime} से ${s.endTime} के लिए कन्फर्म है।`
-            : `Your slot is confirmed at ${s.mandi} for ${s.date} between ${s.startTime} and ${s.endTime}.`;
+            ? `${p.date} Agmarknet आंकड़ों के अनुसार ${context.preferredMandi} में गेहूं का औसत मॉडल भाव ₹${p.modalPrice} प्रति क्विंटल है (न्यूनतम ₹${p.minPrice}, अधिकतम ₹${p.maxPrice})।`
+            : `According to ${p.date} Agmarknet data, the modal price for wheat at ${context.preferredMandi} is ₹${p.modalPrice} per quintal (min ₹${p.minPrice}, max ₹${p.maxPrice}).`;
         return { text, toolCallsMade, suggestStaffEscalation: false };
       } catch (err) {
         const text =
           context.language === 'hi'
-            ? 'स्लॉट विवरण प्राप्त नहीं हो सका। कृपया मंडी ऑपरेटर से मदद लें।'
-            : 'Slot details could not be retrieved. Please check with mandi operator.';
+            ? 'आज के मंडी भाव डेटा प्राप्त नहीं हो सके। कृपया स्टाफ से पूछें।'
+            : 'Mandi price data could not be fetched. Please consult staff.';
+        return { text, toolCallsMade, suggestStaffEscalation: true };
+      }
+    }
+
+    // 4. QUEUE INTENT ("queue", "number", "wait", "katar", "कतार", "नंबर", "बारी", "bari")
+    if (
+      utteranceLower.includes('queue') ||
+      utteranceLower.includes('number') ||
+      utteranceLower.includes('wait') ||
+      utteranceLower.includes('katar') ||
+      utteranceLower.includes('कतार') ||
+      utteranceLower.includes('नंबर') ||
+      utteranceLower.includes('बारी') ||
+      utteranceLower.includes('bari') ||
+      (utteranceLower.includes('kab') && utteranceLower.includes('aayega'))
+    ) {
+      toolCallsMade.push('get_queue');
+      try {
+        const q = await tools.getQueue(context.farmerId);
+        const text =
+          context.language === 'hi'
+            ? `आपका लाइव कतार नंबर ${q.position} है। अनुमानित प्रतीक्षा समय ${q.etaMinutes} मिनट है।`
+            : `Your live queue position is number ${q.position}. Estimated wait time is ${q.etaMinutes} minutes.`;
+        return { text, toolCallsMade, suggestStaffEscalation: false };
+      } catch (err) {
+        const text =
+          context.language === 'hi'
+            ? 'कतार की जानकारी अभी उपलब्ध नहीं है। कृपया मंडी काउंटर पर स्टाफ से संपर्क करें।'
+            : 'Queue information is currently unavailable. Please check with mandi staff.';
         return { text, toolCallsMade, suggestStaffEscalation: true };
       }
     }

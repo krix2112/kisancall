@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../src/context/AuthContext';
-import { REALTIME_CHANNELS, subscribeToChannel } from '@kisancall/shared-types';
+import { REALTIME_CHANNELS, subscribeToChannel, FarmerStatusResponse } from '@kisancall/shared-types';
+import { farmerApi } from '../src/services/api';
 import { supabase } from '../src/supabase';
 
 const colors = {
@@ -42,6 +43,23 @@ export default function HomeScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const [activeNav, setActiveNav] = useState<string>('home');
+  const [statusData, setStatusData] = useState<FarmerStatusResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      if (!user?.id) return;
+      try {
+        const data = await farmerApi.getStatus(user.id);
+        setStatusData(data);
+      } catch (err) {
+        console.error('Failed to fetch status', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStatus();
+  }, [user]);
 
   useEffect(() => {
     const farmerId = user?.id || 'FARMER-9876';
@@ -101,7 +119,7 @@ export default function HomeScreen() {
         <View style={styles.greetingRow}>
           <View>
             <Text style={styles.greetingSub}>शुभ प्रभात / Good Morning</Text>
-            <Text style={styles.greetingTitle}>नमस्ते, Ram Singh</Text>
+            <Text style={styles.greetingTitle}>नमस्ते, {statusData?.farmer?.name || 'Kisan'}</Text>
           </View>
           <View style={styles.userBadgeCircle}>
             <Text style={styles.userBadgeIcon}>👤</Text>
@@ -198,17 +216,16 @@ export default function HomeScreen() {
         {/* Grid 2-cols: Mandi Price & Payment Status */}
         <View style={styles.gridRow}>
           {/* Mandi Price */}
-          <View style={styles.gridCard}>
+          <TouchableOpacity style={styles.gridCard} onPress={() => router.push('/price')}>
             <View>
               <Text style={styles.cardHeaderTitle}>📈 आज का मंडी भाव</Text>
               <Text style={styles.cardHeaderSub}>Today's Mandi Price</Text>
             </View>
             <View style={styles.priceContent}>
-              <Text style={styles.priceBigText}>₹2,275</Text>
-              <Text style={styles.priceCropText}>Wheat (गेहूँ) / Quintal</Text>
-              <Text style={styles.priceFootnote}>31 Aug 2024 • Govt Mandi Data</Text>
+              <Text style={styles.priceBigText}>Check</Text>
+              <Text style={styles.priceCropText}>Live Mandi Rates</Text>
             </View>
-          </View>
+          </TouchableOpacity>
 
           {/* Payment Status */}
           <View style={styles.gridCard}>
@@ -219,9 +236,13 @@ export default function HomeScreen() {
             <View style={styles.paymentContent}>
               <View style={styles.paymentStatusBadge}>
                 <Text style={styles.syncIcon}>🔄</Text>
-                <Text style={styles.paymentStatusText}>Payment Processing</Text>
+                <Text style={styles.paymentStatusText}>
+                  {statusData?.bookings?.[0]?.payment?.status || 'No Payment'}
+                </Text>
               </View>
-              <Text style={styles.paymentRefText}>Ref: PAY-2024-0812</Text>
+              <Text style={styles.paymentRefText}>
+                {statusData?.bookings?.[0]?.payment?.reference || 'N/A'}
+              </Text>
             </View>
           </View>
         </View>

@@ -2,19 +2,8 @@
 
 import React, { useState } from 'react';
 
-const MOCK_FARMERS = [
-  { id: '1', name: 'Ramesh Kumar', phone: '+91 98765 43210', token: '#KC-8849', slot: '09:00 AM - 12:00 PM', crop: 'Wheat', status: 'In Queue' },
-  { id: '2', name: 'Suresh Verma', phone: '+91 98765 43211', token: '#KC-8850', slot: '09:00 AM - 12:00 PM', crop: 'Paddy', status: 'Arrived' },
-  { id: '3', name: 'Baldev Singh', phone: '+91 98765 43212', token: '#KC-8851', slot: '12:00 PM - 03:00 PM', crop: 'Wheat', status: 'Booked' },
-  { id: '4', name: 'Harpreet Kaur', phone: '+91 98765 43213', token: '#KC-8852', slot: '09:00 AM - 12:00 PM', crop: 'Mustard', status: 'Procured' },
-  { id: '5', name: 'Jagdish Chand', phone: '+91 98765 43214', token: '#KC-8853', slot: '12:00 PM - 03:00 PM', crop: 'Gram', status: 'Paid' },
-];
-
-const CAPACITY_BLOCKS = [
-  { time: '09:00 AM - 12:00 PM', capacity: 50, booked: 50, arrived: 35, color: 'bg-rose-500' },
-  { time: '12:00 PM - 03:00 PM', capacity: 50, booked: 42, arrived: 18, color: 'bg-emerald-500' },
-  { time: '03:00 PM - 06:00 PM', capacity: 50, booked: 28, arrived: 5, color: 'bg-amber-500' },
-];
+import { MOCK_FARMERS, CAPACITY_BLOCKS } from '@/lib/mockData';
+import { DataTable } from '@/components/DataTable';
 
 export default function TodayOverviewPage() {
   const [farmers] = useState(MOCK_FARMERS);
@@ -87,22 +76,26 @@ export default function TodayOverviewPage() {
 
       {/* Registered Farmers Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden space-y-4 p-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-base font-bold text-slate-900">Today Farmer Registration & Slot Ledger</h2>
-          <span className="text-xs text-slate-500 font-mono">Total 5 entries shown</span>
-        </div>
+        <div>
+          <h2 className="text-sm font-bold text-slate-900 mb-3 flex items-center space-x-2">
+            <span>📋</span>
+            <span>Today's Live Roster</span>
+          </h2>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-700">
-            <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold border-b">
-              <tr>
-                <th className="py-3 px-4">Token #</th>
-                <th className="py-3 px-4">Farmer Name</th>
-                <th className="py-3 px-4">Phone</th>
-                <th className="py-3 px-4">Time Slot</th>
-                <th className="py-3 px-4">Crop</th>
-                <th className="py-3 px-4">Status</th>
-              </tr>
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs font-semibold text-amber-800 mb-4">
+            ⚠️ MISSING BACKEND CAPABILITY: The backend does not have a GET /bookings API to fetch today's roster. This list is currently using fallback mock data.
+          </div>
+          
+          <DataTable>
+            <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold border-b border-slate-200">
+                <tr>
+                  <th className="py-3 px-4">Token #</th>
+                  <th className="py-3 px-4">Farmer Name</th>
+                  <th className="py-3 px-4">Phone</th>
+                  <th className="py-3 px-4">Time Slot</th>
+                  <th className="py-3 px-4">Crop</th>
+                  <th className="py-3 px-4">Status</th>
+                </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-medium">
               {farmers.map((farmer) => (
@@ -120,7 +113,7 @@ export default function TodayOverviewPage() {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </DataTable>
         </div>
       </div>
     </div>

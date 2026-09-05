@@ -1,83 +1,21 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 
-interface FarmerStatusData {
-  farmer: {
-    name: string;
-    phone: string;
-    mandi: string;
-    crop: string;
-  };
-  booking: {
-    tokenId: string;
-    date: string;
-    slotBlock: string;
-    status: 'Booked' | 'Arrived' | 'In Queue' | 'Procured' | 'Completed';
-  };
-  queue: {
-    position: number;
-    totalInQueue: number;
-    etaMinutes: number;
-    gateNumber: string;
-  };
-  price: {
-    commodity: string;
-    modalPrice: number;
-    msp: number;
-    date: string;
-  };
-  payment: {
-    status: 'Pending' | 'Processing' | 'Paid';
-    amount: number;
-    reference: string;
-    updatedAt: string;
-  };
-  proof?: {
-    txHash: string;
-    blockNumber: number;
-    verified: boolean;
-  };
-}
+import { FALLBACK_STATUS, FarmerStatusData } from '@/lib/mockData';
+import { farmerApi } from '@/services/api';
+import { FarmerStatusResponse } from '@kisancall/shared-types';
 
-const FALLBACK_STATUS: FarmerStatusData = {
-  farmer: {
-    name: 'Ramesh Kumar (रमेश कुमार)',
-    phone: '+91 98765 43210',
-    mandi: 'Karnal Central Mandi (कर्नाल केंद्रीय मंडी)',
-    crop: 'Wheat / गेहूं (Lok-1)',
-  },
-  booking: {
-    tokenId: '#KC-8849',
-    date: '01 Sep 2026',
-    slotBlock: 'Morning 08:00 AM - 12:00 PM',
-    status: 'In Queue',
-  },
-  queue: {
-    position: 4,
-    totalInQueue: 18,
-    etaMinutes: 25,
-    gateNumber: 'Gate 2 (गेट न. 2)',
-  },
-  price: {
-    commodity: 'Wheat (गेहूं)',
-    modalPrice: 2275,
-    msp: 2275,
-    date: '31 Aug 2026',
-  },
-  payment: {
-    status: 'Paid',
-    amount: 45500,
-    reference: 'PAY-884920-IND',
-    updatedAt: '31 Aug 02:30 PM',
-  },
-  proof: {
-    txHash: '0x7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a',
-    blockNumber: 4892014,
-    verified: true,
-  },
-};
+const MandiMap = dynamic(() => import('@/components/MandiMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-44 bg-slate-100 rounded-xl flex items-center justify-center text-xs text-slate-500 animate-pulse border border-slate-200">
+      🗺️ Loading Mandi Map (नक्शा लोड हो रहा है)...
+    </div>
+  ),
+});
 
 export default function FarmerWebPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -87,7 +25,7 @@ export default function FarmerWebPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'error' | 'info'; text: string } | null>(null);
   
-  const [statusData, setStatusData] = useState<FarmerStatusData>(FALLBACK_STATUS);
+  const [statusData, setStatusData] = useState<FarmerStatusResponse | null>(null);
   const [isFetchingStatus, setIsFetchingStatus] = useState(false);
   const [callRequested, setCallRequested] = useState(false);
 
@@ -109,12 +47,11 @@ export default function FarmerWebPage() {
   const fetchStatus = async () => {
     setIsFetchingStatus(true);
     try {
-      const res = await fetch('http://localhost:4000/farmers/KC-FARMER-8849/status');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.status) {
-          setStatusData(data.status);
-        }
+      // In real scenario, user.id comes from session. Using dummy for now as in original code.
+      const dummyFarmerId = '00000000-0000-0000-0000-000000000001';
+      const data = await farmerApi.getStatus(dummyFarmerId);
+      if (data) {
+        setStatusData(data);
       }
     } catch (err) {
       console.log('Backend status API offline, using fallback state:', err);
@@ -436,13 +373,15 @@ export default function FarmerWebPage() {
           <div className="bg-emerald-900 text-white rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <div className="flex items-center space-x-2">
-                <span className="text-xl font-bold">{statusData.farmer.name}</span>
-                <span className="bg-emerald-700 text-emerald-100 text-xs px-2 py-0.5 rounded font-mono font-semibold">
-                  {statusData.booking.tokenId}
-                </span>
+                <span className="text-xl font-bold">{statusData?.farmer?.name || 'Kisan'}</span>
+                {statusData?.bookings?.[0]?.token && (
+                  <span className="bg-emerald-700 text-emerald-100 text-xs px-2 py-0.5 rounded font-mono font-semibold">
+                    {statusData.bookings[0].token}
+                  </span>
+                )}
               </div>
               <p className="text-xs text-emerald-200 mt-1">
-                {statusData.farmer.mandi} • {statusData.farmer.crop}
+                {statusData?.farmer?.preferred_mandi_id ? 'Mandi ID: ' + statusData.farmer.preferred_mandi_id : 'No Mandi Selected'} • {statusData?.farmer?.crop || 'No Crop Selected'}
               </p>
             </div>
             <div className="flex items-center space-x-3">
@@ -476,14 +415,13 @@ export default function FarmerWebPage() {
                   <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
                     📅 स्लॉट स्थिति / Slot Details
                   </h3>
-                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${getStatusBadge(statusData.booking.status)}`}>
-                    {statusData.booking.status}
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${getStatusBadge(statusData?.bookings?.[0]?.status || 'None')}`}>
+                    {statusData?.bookings?.[0]?.status || 'No Booking'}
                   </span>
                 </div>
                 <div className="space-y-1.5 text-xs text-slate-700">
-                  <p><span className="font-semibold text-slate-500">Scheduled Date:</span> {statusData.booking.date}</p>
-                  <p><span className="font-semibold text-slate-500">Time Block:</span> {statusData.booking.slotBlock}</p>
-                  <p><span className="font-semibold text-slate-500">Token ID:</span> <span className="font-mono font-bold text-emerald-700">{statusData.booking.tokenId}</span></p>
+                  <p><span className="font-semibold text-slate-500">Scheduled Date:</span> {statusData?.bookings?.[0]?.created_at ? new Date(statusData.bookings[0].created_at).toLocaleDateString() : 'N/A'}</p>
+                  <p><span className="font-semibold text-slate-500">Token ID:</span> <span className="font-mono font-bold text-emerald-700">{statusData?.bookings?.[0]?.token || 'N/A'}</span></p>
                 </div>
               </div>
 
@@ -498,37 +436,45 @@ export default function FarmerWebPage() {
               </button>
             </div>
 
-            {/* MODULE 2: Queue Status */}
-            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
-              <div className="flex justify-between items-center border-b pb-2">
-                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                  🚜 कतार स्थिति / Queue Sequence
-                </h3>
-                <span className="bg-rose-100 text-rose-800 border border-rose-200 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
-                  Pos #{statusData.queue.position}
-                </span>
+            {/* MODULE 2: Queue Status & Mandi Map */}
+            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3 flex flex-col justify-between">
+              <div>
+                <div className="flex justify-between items-center border-b pb-2 mb-3">
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                    🚜 कतार व मंडी नक्शा / Mandi Map & Queue
+                  </h3>
+                  <span className="bg-emerald-100 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
+                    Live Geo-Location
+                  </span>
+                </div>
+                
+                {/* Real-time Embedded Leaflet Map */}
+                <MandiMap
+                  farmerMandi={(statusData?.farmer as any)?.mandi || null}
+                  farmerMandiName={selectedMandi}
+                />
               </div>
-              <div className="space-y-1.5 text-xs text-slate-700">
-                <p><span className="font-semibold text-slate-500">Current Position:</span> <strong className="text-slate-900 text-sm">#{statusData.queue.position}</strong> (out of {statusData.queue.totalInQueue})</p>
-                <p><span className="font-semibold text-slate-500">Est. Wait Time:</span> <strong className="text-amber-800">~{statusData.queue.etaMinutes} minutes</strong></p>
-                <p><span className="font-semibold text-slate-500">Assigned Gate:</span> {statusData.queue.gateNumber}</p>
+
+              <div className="pt-2 text-xs text-slate-600 flex items-center justify-between border-t border-slate-100">
+                <span>Current Queue Mode: <strong className="text-emerald-800 font-semibold">Active Dispatch</strong></span>
+                <span className="text-[11px] text-slate-500">Tap map to explore all mandis</span>
               </div>
             </div>
 
-            {/* MODULE 3: Mandi Price & MSP */}
+            {/* MODULE 3: Procurement Status */}
             <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
               <div className="flex justify-between items-center border-b pb-2">
                 <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                  🌾 सरकारी भाव / Mandi Rate
+                  🌾 खरीद विवरण / Procurement
                 </h3>
                 <span className="bg-emerald-100 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
-                  Agmarknet Daily
+                  {statusData?.bookings?.[0]?.procurement?.status || 'Pending'}
                 </span>
               </div>
               <div className="space-y-1.5 text-xs text-slate-700">
-                <p><span className="font-semibold text-slate-500">Commodity:</span> {statusData.price.commodity}</p>
-                <p><span className="font-semibold text-slate-500">Today's Modal Price:</span> <strong className="text-emerald-800 text-base">₹{statusData.price.modalPrice} / Qtl</strong></p>
-                <p><span className="font-semibold text-slate-500">Govt MSP Guarantee:</span> ₹{statusData.price.msp} / Qtl</p>
+                <p><span className="font-semibold text-slate-500">Quantity:</span> {statusData?.bookings?.[0]?.procurement?.quantity || 0} Qtl</p>
+                <p><span className="font-semibold text-slate-500">Price:</span> <strong className="text-emerald-800 text-base">₹{statusData?.bookings?.[0]?.procurement?.price || 0} / Qtl</strong></p>
+                <p><span className="font-semibold text-slate-500">Quality:</span> {statusData?.bookings?.[0]?.procurement?.quality_status || 'N/A'}</p>
               </div>
             </div>
 
@@ -539,34 +485,18 @@ export default function FarmerWebPage() {
                   💳 डीबीटी भुगतान / Payment Status
                 </h3>
                 <span className="bg-emerald-100 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
-                  {statusData.payment.status}
+                  {statusData?.bookings?.[0]?.payment?.status || 'Pending'}
                 </span>
               </div>
               <div className="space-y-1.5 text-xs text-slate-700">
-                <p><span className="font-semibold text-slate-500">Disbursed Amount:</span> <strong className="text-slate-900 text-sm">₹{statusData.payment.amount.toLocaleString('en-IN')}</strong></p>
-                <p><span className="font-semibold text-slate-500">PFMS Ref:</span> <span className="font-mono text-slate-800">{statusData.payment.reference}</span></p>
-                <p><span className="font-semibold text-slate-500">Updated:</span> {statusData.payment.updatedAt}</p>
+                <p><span className="font-semibold text-slate-500">Amount:</span> <strong className="text-slate-900 text-sm">₹{((statusData?.bookings?.[0]?.procurement?.quantity || 0) * (statusData?.bookings?.[0]?.procurement?.price || 0)).toLocaleString('en-IN')}</strong></p>
+                <p><span className="font-semibold text-slate-500">Reference:</span> <span className="font-mono text-slate-800">{statusData?.bookings?.[0]?.payment?.reference || 'N/A'}</span></p>
+                <p><span className="font-semibold text-slate-500">Updated:</span> {statusData?.bookings?.[0]?.payment?.updated_at ? new Date(statusData.bookings[0].payment.updated_at).toLocaleDateString() : 'N/A'}</p>
               </div>
             </div>
           </div>
 
-          {/* BLOCKCHAIN AGROCHAIN PROOF REFERENCE */}
-          {statusData.proof && (
-            <div className="bg-slate-900 text-white rounded-xl p-5 shadow-sm space-y-2">
-              <div className="flex justify-between items-center">
-                <h4 className="text-xs font-bold text-emerald-400 flex items-center gap-1">
-                  🔗 AgroChain Verifiable Proof Reference (Shardeum EVM)
-                </h4>
-                <span className="text-[10px] bg-emerald-950 text-emerald-300 border border-emerald-800 px-2 py-0.5 rounded font-mono font-bold">
-                  ✓ ON-CHAIN VERIFIED
-                </span>
-              </div>
-              <div className="font-mono text-xs text-slate-300 overflow-x-auto space-y-1">
-                <p><span className="text-slate-500">TxHash:</span> {statusData.proof.txHash}</p>
-                <p><span className="text-slate-500">Block:</span> #{statusData.proof.blockNumber}</p>
-              </div>
-            </div>
-          )}
+
 
           {/* REQUEST A CALL BANNER */}
           <div className="bg-emerald-50 rounded-2xl border border-emerald-200 p-6 shadow-sm text-center space-y-3">
@@ -734,24 +664,24 @@ export default function FarmerWebPage() {
                     </button>
                   ) : (
                     <button
-                      onClick={() => {
-                        setStatusData((prev) => ({
-                          ...prev,
-                          booking: {
-                            tokenId: '#KC-9942',
-                            date: selectedDate,
-                            slotBlock: selectedSlot,
-                            status: 'Booked',
-                          },
-                          farmer: {
-                            ...prev.farmer,
-                            crop: selectedCrop,
-                            mandi: selectedMandi,
-                          },
-                        }));
-                        setShowBookSlotModal(false);
+                      disabled={loading}
+                      onClick={async () => {
+                        try {
+                          setLoading(true);
+                          const dummyFarmerId = '00000000-0000-0000-0000-000000000001';
+                          const dummySlotId = '00000000-0000-0000-0000-000000000002'; // Replace with selected slot ID in real implementation
+                          const booking = await farmerApi.createBooking(dummyFarmerId, dummySlotId);
+                          
+                          alert(`Successfully booked! Token: ${booking.token}`);
+                          setShowBookSlotModal(false);
+                          fetchStatus();
+                        } catch (err: any) {
+                          alert(`Booking failed: ${err.message}`);
+                        } finally {
+                          setLoading(false);
+                        }
                       }}
-                      className="flex-1 py-3 bg-[#00450d] text-white rounded-xl text-sm font-semibold hover:bg-[#1b5e20]"
+                      className="flex-1 py-3 bg-[#00450d] text-white rounded-xl text-sm font-semibold hover:bg-[#1b5e20] disabled:opacity-50"
                     >
                       Confirm Slot (पुष्टि करें) ✓
                     </button>

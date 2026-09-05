@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, SafeAreaView, ActivityIndicator, TouchableOpacity } from 'react-native';
 
 import { useRouter } from 'expo-router';
+import { farmerApi } from '../src/services/api';
 
 interface PriceItem {
   commodity: string;
@@ -26,6 +27,7 @@ export default function PriceScreen() {
   const [prices, setPrices] = useState<PriceItem[]>(FALLBACK_PRICES);
   const [loading, setLoading] = useState<boolean>(false);
   const [isRealData, setIsRealData] = useState<boolean>(false);
+  const [isStale, setIsStale] = useState<boolean>(false);
 
   useEffect(() => {
     fetchMandiPrices();
@@ -34,14 +36,22 @@ export default function PriceScreen() {
   const fetchMandiPrices = async () => {
     setLoading(true);
     try {
-      // Real backend route: GET /mandis/:id/prices
-      const res = await fetch('http://localhost:4000/mandis/karnal-central/prices');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.prices && data.prices.length > 0) {
-          setPrices(data.prices);
-          setIsRealData(true);
-        }
+      const data = await farmerApi.getPrices('karnal-central');
+      if (data && data.prices && data.prices.length > 0) {
+        // Map the backend prices to the PriceItem expected format
+        const mappedPrices = data.prices.map((p) => ({
+          commodity: p.commodity,
+          variety: p.variety,
+          min_price: p.min_price,
+          max_price: p.max_price,
+          modal_price: p.modal_price,
+          msp: undefined, // Add logic if needed
+          mandi: data.mandi_name,
+          date: p.date,
+        }));
+        setPrices(mappedPrices);
+        setIsRealData(true);
+        setIsStale(data.stale === true);
       }
     } catch (err) {
       console.log('Backend prices unavailable, showing cached Agmarknet data:', err);
@@ -62,6 +72,13 @@ export default function PriceScreen() {
             🏛️ Source: Agmarknet / Govt. Dept of Consumer Affairs (DoCA) • Updated Daily
           </Text>
           {isRealData && <Text style={styles.liveBadge}>● LIVE BACKEND SYNC</Text>}
+          {isStale && (
+            <View style={{ marginTop: 8, padding: 8, backgroundColor: '#FEF2F2', borderRadius: 4, borderWidth: 1, borderColor: '#FCA5A5' }}>
+              <Text style={{ fontSize: 11, color: '#DC2626', fontWeight: 'bold' }}>
+                ⚠️ WARNING: Price may be outdated. Showing last available data.
+              </Text>
+            </View>
+          )}
         </View>
 
         {loading ? (

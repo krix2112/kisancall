@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { staffApi } from '@/services/api';
 
 export default function ProcurementEntryPage() {
   const [weight, setWeight] = useState<string>('');
@@ -14,6 +15,10 @@ export default function ProcurementEntryPage() {
     damagedGrain: true,
     bagCount: true,
   });
+
+  const [loading, setLoading] = useState(false);
+  const [errorBanner, setErrorBanner] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const numericWeight = parseFloat(weight) || 0;
   const totalPayment = numericWeight * rate;
@@ -30,6 +35,31 @@ export default function ProcurementEntryPage() {
 
   const toggleCheck = (key: keyof typeof checklist) => {
     setChecklist((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleSaveAndPrint = async () => {
+    setLoading(true);
+    setErrorBanner(null);
+    setSuccessMsg(null);
+    try {
+      // Dummy booking ID since there's no real list to select from yet
+      const dummyBookingId = '00000000-0000-0000-0000-000000000002';
+      await staffApi.submitProcurement(dummyBookingId, {
+        weight: numericWeight,
+        rate,
+        total: totalPayment,
+        checklist
+      });
+      setSuccessMsg(`✓ Procurement saved successfully for Token ${token}`);
+    } catch (err: any) {
+      if (err.message.includes('501')) {
+        setErrorBanner(`MISSING BACKEND CAPABILITY: The backend route POST /staff/procurement is a stub and returned 501 Not Implemented. Frontend is correctly wired.`);
+      } else {
+        setErrorBanner(`Error: ${err.message}`);
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -60,6 +90,23 @@ export default function ProcurementEntryPage() {
           </span>
         </div>
       </div>
+
+      {errorBanner && (
+        <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-xs font-semibold text-red-800 flex justify-between items-start z-10 relative">
+          <div className="flex-1">
+            <span className="font-bold block mb-1">⚠️ Error Saving Procurement</span>
+            {errorBanner}
+          </div>
+          <button onClick={() => setErrorBanner(null)} className="text-red-600 hover:text-red-900 ml-2">✕</button>
+        </div>
+      )}
+
+      {successMsg && (
+        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs font-semibold text-emerald-800 flex justify-between items-center z-10 relative">
+          <span>{successMsg}</span>
+          <button onClick={() => setSuccessMsg(null)} className="text-emerald-600 hover:text-emerald-900">✕</button>
+        </div>
+      )}
 
       {/* ── Main Grid Section ────────────────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-8">
@@ -240,8 +287,12 @@ export default function ProcurementEntryPage() {
           </div>
 
           <div className="flex flex-col gap-4 mt-auto">
-            <button className="w-full min-h-[48px] bg-[#00450d] hover:bg-[#1b5e20] text-white rounded-lg text-[16px] font-semibold shadow-md transition-transform active:scale-[0.98] flex items-center justify-center gap-2">
-              <span className="material-symbols-outlined">print</span> Save & Print Slip
+            <button 
+              onClick={handleSaveAndPrint}
+              disabled={loading}
+              className={`w-full min-h-[48px] text-white rounded-lg text-[16px] font-semibold shadow-md transition-transform flex items-center justify-center gap-2 ${loading ? 'bg-[#1b5e20]/70' : 'bg-[#00450d] hover:bg-[#1b5e20] active:scale-[0.98]'}`}>
+              <span className="material-symbols-outlined">{loading ? 'hourglass_empty' : 'print'}</span> 
+              {loading ? 'Saving...' : 'Save & Print Slip'}
             </button>
             <button className="w-full min-h-[48px] border border-[#00450d] text-[#00450d] hover:bg-[#00450d]/5 rounded-lg text-[16px] font-semibold transition-colors flex items-center justify-center gap-2">
               <span className="material-symbols-outlined">edit</span> Edit Token Details

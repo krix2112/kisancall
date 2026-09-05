@@ -2,23 +2,8 @@
 
 import React, { useState } from 'react';
 
-interface CallRecord {
-  id: string;
-  callSid: string;
-  phone: string;
-  farmerName: string;
-  intent: string;
-  duration: string;
-  outcome: string;
-  status: 'Completed' | 'Failed' | 'Escalated';
-  timestamp: string;
-}
-
-const INITIAL_CALLS: CallRecord[] = [
-  { id: '1', callSid: 'CA88192031', phone: '+91 98765 43210', farmerName: 'Ramesh Kumar', intent: 'Queue Check', duration: '1m 14s', outcome: 'Answered in Hindi (Queue pos #4)', status: 'Completed', timestamp: '31 Aug 09:30 AM' },
-  { id: '2', callSid: 'CA88192032', phone: '+91 98765 43211', farmerName: 'Suresh Verma', intent: 'Slot Reminder', duration: '0m 00s', outcome: 'Unanswered / Busy', status: 'Failed', timestamp: '31 Aug 08:45 AM' },
-  { id: '3', callSid: 'CA88192033', phone: '+91 98765 43212', farmerName: 'Baldev Singh', intent: 'Price Query', duration: '2m 05s', outcome: 'Provided Wheat MSP ₹2,275', status: 'Completed', timestamp: '30 Aug 04:15 PM' },
-];
+import { INITIAL_CALLS, CallRecord } from '@/lib/mockData';
+import { DataTable } from '@/components/DataTable';
 
 export default function CallConsolePage() {
   const [calls, setCalls] = useState<CallRecord[]>(INITIAL_CALLS);
@@ -53,10 +38,8 @@ export default function CallConsolePage() {
         </div>
       )}
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden p-6 space-y-4">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-700">
-            <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold border-b">
+      <DataTable>
+        <thead className="bg-slate-50 text-slate-500 uppercase text-[10px] font-bold border-b">
               <tr>
                 <th className="py-3 px-4">Call SID</th>
                 <th className="py-3 px-4">Farmer</th>
@@ -107,9 +90,7 @@ export default function CallConsolePage() {
                 </tr>
               ))}
             </tbody>
-          </table>
-        </div>
-      </div>
+      </DataTable>
     </div>
   );
 }

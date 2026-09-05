@@ -1,370 +1,267 @@
-import { FastifyInstance, FastifyRequest } from 'fastify';
+import { FastifyInstance } from 'fastify';
 import { supabase } from '../supabase.js';
 import { authGuard } from '../auth.js';
-import { BookingStatus, ProcurementStatus, PaymentStatus, QualityStatus, Booking, Payment } from '@kisancall/shared-types';
-import { AuthenticatedRequest } from '../auth.js';
-import { enqueueProofEvent } from './proofEvents.js';
 
-/**
- * Staff endpoints — operator/supervisor/admin actions.
- * Zero hardcoded data: every value traces back to a real Supabase row at call time.
- */
 export async function staffRoutes(fastify: FastifyInstance): Promise<void> {
-  // Helper to get authenticated user with proper typing
-  const getAuthUser = (request: FastifyRequest) => {
-    const authRequest = request as AuthenticatedRequest;
-    return authRequest.user;
-  };
+  /**
+   * GET /staff/roster
+   * Return all bookings for a mandi/date joined with farmer name/phone, current status, and latest queue_event
+   */
+  fastify.get(
+    '/staff/roster',
+    { preHandler: [authGuard(['operator', 'supervisor', 'admin'])] },
+    async (request, reply) => {
+      const query = request.query as { mandi_id: string; date?: string };
+      
+      if (!query.mandi_id) {
+        return reply.status(400).send({
+          error: 'Bad Request',
+          message: 'mandi_id is required',
+        });
+      }
 
-  // ============================================================
-  // POST /staff/arrivals — mark booking as arrived
-  // ============================================================
+      const date = query.date || new Date().toISOString().split('T')[0];
+
+      // Find slots for this mandi and date
+      const { data: slots, error: slotsErr } = await supabase
+        .from('slots')
+        .select('id')
+        .eq('mandi_id', query.mandi_id)
+        .eq('date', date);
+
+      if (slotsErr) throw slotsErr;
+
+      if (!slots || slots.length === 0) {
+        return reply.send([]);
+      }
+
+      const slotIds = slots.map(s => s.id);
+
+      // Get bookings for these slots
+      const { data: bookings, error: bookingsErr } = await supabase
+        .from('bookings')
+        .select(`
+          id,
+          status,
+          token,
+          farmers ( id, name, phone )
+        `)
+        .in('slot_id', slotIds);
+
+      if (bookingsErr) throw bookingsErr;
+
+      // Enrich with latest queue_event
+      const roster = await Promise.all((bookings || []).map(async (b: any) => {
+        const { data: queueEvent } = await supabase
+          .from('queue_events')
+          .select('event_type, timestamp, sequence')
+          .eq('booking_id', b.id)
+          .order('sequence', { ascending: false })
+          .limit(1)
+          .single();
+
+        return {
+          ...b,
+          latest_event: queueEvent || null,
+        };
+      }));
+
+      // Audit log
+      const user = (request as any).user;
+      await supabase.from('audit_logs').insert({
+        actor: user.id,
+        action: 'GET /staff/roster',
+        entity: query.mandi_id
+      });
+
+      return reply.send(roster);
+    }
+  );
+
+  /**
+   * POST /staff/arrivals
+   * Mark a booking as arrived, insert queue_event, update status
+   */
   fastify.post(
     '/staff/arrivals',
-    {
-      preHandler: [authGuard(['operator', 'supervisor', 'admin'])],
-      schema: {
-        body: {
-          type: 'object' as const,
-          required: ['booking_id'],
-          properties: {
-            booking_id: { type: 'string' as const, format: 'uuid' },
-          },
-          additionalProperties: false,
-        },
-      },
-    },
+    { preHandler: [authGuard(['operator', 'supervisor', 'admin'])] },
     async (request, reply) => {
-      const { booking_id } = request.body as { booking_id: string };
-      const user = getAuthUser(request);
+      const body = request.body as { booking_id: string };
 
-      // 1. Verify booking exists
+      if (!body.booking_id) {
+        return reply.status(400).send({
+          error: 'Bad Request',
+          message: 'booking_id is required',
+        });
+      }
+
+      // Verify booking exists and its status
       const { data: booking, error: bookingErr } = await supabase
         .from('bookings')
-        .select('id, slot_id, status, farmers!inner(mandi_id)')
-        .eq('id', booking_id)
+        .select('id, status, slot_id')
+        .eq('id', body.booking_id)
         .single();
 
       if (bookingErr || !booking) {
-        return reply.status(400).send({
-          error: 'Bad Request',
-          message: `Booking with id '${booking_id}' does not exist`,
+        return reply.status(404).send({
+          error: 'Not Found',
+          message: 'Booking not found',
         });
       }
 
-      // Handle potential null farmers array
-      if (!booking.farmers || booking.farmers.length === 0) {
-        return reply.status(400).send({
-          error: 'Bad Request',
-          message: 'Booking has no associated mandi',
-        });
-      }
-
-      const mandiId = booking.farmers[0].mandi_id;
-
-      // 2. Verify staff member is scoped to this mandi
-      const { data: staffFarmer, error: staffErr } = await supabase
-        .from('user_roles')
-        .select('farmers!inner(mandi_id)')
-        .eq('auth_user_id', user?.id)
-        .single();
-
-      if (staffErr || !staffFarmer || !staffFarmer.farmers || staffFarmer.farmers.length === 0) {
-        return reply.status(403).send({
-          error: 'Forbidden',
-          message: 'Staff member has no associated mandi',
-        });
-      }
-
-      const staffMandiId = staffFarmer.farmers[0].mandi_id;
-
-      // 3. Ensure staff mandi matches booking mandi
-      if (staffMandiId !== mandiId) {
-        return reply.status(403).send({
-          error: 'Forbidden',
-          message: `Staff member is not authorized for mandi ${mandiId}`,
-        });
-      }
-
-      // 4. Only allow arrivals on confirmed bookings
-      if (booking.status !== 'confirmed') {
+      if (booking.status === 'completed') {
         return reply.status(409).send({
           error: 'Conflict',
-          message: `Booking is not confirmed (status: ${booking.status})`,
+          message: 'Booking is already completed',
         });
       }
 
-      // 5. Mark booking as arrived by inserting queue_events row
-      const { data: queueEvent, error: queueErr } = await supabase
+      // Check if already arrived via queue_events
+      const { data: existingArrival } = await supabase
+        .from('queue_events')
+        .select('id')
+        .eq('booking_id', body.booking_id)
+        .eq('event_type', 'ARRIVED')
+        .single();
+        
+      if (existingArrival) {
+        return reply.status(409).send({
+          error: 'Conflict',
+          message: 'Booking is already marked as arrived',
+        });
+      }
+
+      // Get next sequence for queue_events
+      const { data: events } = await supabase
+        .from('queue_events')
+        .select('sequence')
+        .eq('booking_id', body.booking_id)
+        .order('sequence', { ascending: false })
+        .limit(1);
+
+      const nextSequence = events && events.length > 0 ? (events[0].sequence + 1) : 1;
+
+      // Insert queue_event
+      const { data: queueEvent, error: qeErr } = await supabase
         .from('queue_events')
         .insert({
-          booking_id,
-          event_type: 'arrived',
-          timestamp: new Date().toISOString(),
+          booking_id: body.booking_id,
+          event_type: 'ARRIVED',
+          sequence: nextSequence,
         })
         .select()
         .single();
 
-      if (queueErr) throw queueErr;
+      if (qeErr) throw qeErr;
 
-      // Also update booking status to reflect arrival
-      const { data: updatedBooking, error: updateErr } = await supabase
-        .from('bookings')
-        .update({ status: 'arrived' })
-        .eq('id', booking_id)
-        .select()
-        .single();
+      // Audit log
+      const user = (request as any).user;
+      await supabase.from('audit_logs').insert({
+        actor: user.id,
+        action: 'POST /staff/arrivals',
+        entity: body.booking_id
+      });
 
-      if (updateErr) throw updateErr;
-
-      return reply.status(201).send({
-        booking_id: updatedBooking.id,
-        status: updatedBooking.status,
-        arrived_at: queueEvent.timestamp,
+      return reply.send({
+        booking: { ...booking, status: 'arrived' },
+        queue_event: queueEvent,
       });
     }
   );
 
-  // ============================================================
-  // POST /staff/procurement — mark procurement with real data
-  // ============================================================
+  /**
+   * POST /staff/procurement
+   * Record procurement details (quantity, price, quality), create payment row
+   */
   fastify.post(
     '/staff/procurement',
-    {
-      preHandler: [authGuard(['operator', 'supervisor', 'admin'])],
-      schema: {
-        body: {
-          type: 'object' as const,
-          required: ['booking_id', 'quantity', 'price', 'quality_status'],
-          properties: {
-            booking_id: { type: 'string' as const, format: 'uuid' },
-            quantity: { type: 'number' as const, minimum: 0 },
-            price: { type: 'number' as const, minimum: 0 },
-            quality_status: {
-              type: 'string' as const,
-              enum: ['grade_a', 'grade_b', 'grade_c', 'rejected'] as const,
-            },
-          },
-          additionalProperties: false,
-        },
-      },
-    },
+    { preHandler: [authGuard(['operator', 'supervisor', 'admin'])] },
     async (request, reply) => {
-      const { booking_id, quantity, price, quality_status } = request.body as {
+      const body = request.body as {
         booking_id: string;
         quantity: number;
         price: number;
-        quality_status: QualityStatus;
+        quality_status: string;
       };
-      const user = getAuthUser(request);
 
-      // 1. Verify booking exists and is confirmed/arrived
+      if (!body.booking_id || body.quantity === undefined || body.price === undefined || !body.quality_status) {
+        return reply.status(400).send({
+          error: 'Bad Request',
+          message: 'booking_id, quantity, price, and quality_status are required',
+        });
+      }
+
+      // Validate booking exists
       const { data: booking, error: bookingErr } = await supabase
         .from('bookings')
-        .select('id, status, slot_id, farmers!inner(mandi_id)')
-        .eq('id', booking_id)
+        .select('id, status, slot_id')
+        .eq('id', body.booking_id)
         .single();
 
       if (bookingErr || !booking) {
-        return reply.status(400).send({
-          error: 'Bad Request',
-          message: `Booking with id '${booking_id}' does not exist`,
+        return reply.status(404).send({
+          error: 'Not Found',
+          message: 'Booking not found',
         });
       }
 
-      if (!booking.farmers || booking.farmers.length === 0) {
-        return reply.status(400).send({
-          error: 'Bad Request',
-          message: 'Booking has no associated mandi',
-        });
-      }
-
-      const mandiId = booking.farmers[0].mandi_id;
-
-      // 2. Verify staff member is scoped to this mandi
-      const { data: staffFarmer, error: staffErr } = await supabase
-        .from('user_roles')
-        .select('farmers!inner(mandi_id)')
-        .eq('auth_user_id', user?.id)
-        .single();
-
-      if (staffErr || !staffFarmer || !staffFarmer.farmers || staffFarmer.farmers.length === 0) {
-        return reply.status(403).send({
-          error: 'Forbidden',
-          message: 'Staff member has no associated mandi',
-        });
-      }
-
-      const staffMandiId = staffFarmer.farmers[0].mandi_id;
-
-      if (staffMandiId !== mandiId) {
-        return reply.status(403).send({
-          error: 'Forbidden',
-          message: `Staff member is not authorized for mandi ${mandiId}`,
-        });
-      }
-
-      // 3. Only allow procurement on confirmed or arrived bookings
-      if (!['confirmed', 'arrived'].includes(booking.status)) {
-        return reply.status(409).send({
-          error: 'Conflict',
-          message: `Booking is not ready for procurement (status: ${booking.status})`,
-        });
-      }
-
-      // 4. Check if procurement already exists for this booking
-      const { data: existingProcurement, error: procureCheckErr } = await supabase
+      // Check if procurement already exists
+      const { data: existingProc } = await supabase
         .from('procurements')
-        .select('id')
-        .eq('booking_id', booking_id)
+        .select('booking_id')
+        .eq('booking_id', body.booking_id)
         .single();
 
-      if (procureCheckErr && procureCheckErr.code !== 'PGRST116') {
-        throw procureCheckErr;
-      }
-
-      if (existingProcurement) {
+      if (existingProc) {
         return reply.status(409).send({
           error: 'Conflict',
           message: 'Procurement already exists for this booking',
         });
       }
 
-      // 5. Insert procurement with REAL submitted data — no defaults, no fallbacks
-      const { data: procurement, error: procureErr } = await supabase
+      // Insert procurement
+      const { data: procurement, error: procErr } = await supabase
         .from('procurements')
         .insert({
-          booking_id,
-          quantity,
-          price,
-          quality_status,
-          status: 'in_progress',
+          booking_id: body.booking_id,
+          quantity: body.quantity,
+          price: body.price,
+          quality_status: body.quality_status,
+          status: 'verified',
         })
         .select()
         .single();
 
-      if (procureErr) throw procureErr;
+      if (procErr) throw procErr;
 
-      // Enqueue a proof-event for async on-chain anchoring.
-      // This returns 202 with the proof-event id; the proofQueue worker
-      // submits the hash to Shardeum in the background. The staff-facing
-      // response is not blocked on chain confirmation.
-      // If enqueueing fails (e.g. Supabase hiccup), we don't fail the whole
-      // procurement — the row is already in Supabase. The operator can retry
-      // by POSTing /proof-events with the procurement_id again.
-      let proofEventId: string | null = null;
-      try {
-        const proofRow = await enqueueProofEvent(booking_id, 'procurement_completed');
-        proofEventId = proofRow.id;
-      } catch (proofErr) {
-        console.error(
-          `[staff] Failed to enqueue proof-event for procurement ${booking_id}:`,
-          proofErr
-        );
-      }
-
-      return reply.status(201).send({
-        ...procurement,
-        proof_event_id: proofEventId,
-      });
-    }
-  );
-
-  // ============================================================
-  // PATCH /payments/:id — update payment status
-  // ============================================================
-  fastify.patch(
-    '/payments/:id',
-    {
-      preHandler: [authGuard(['supervisor', 'admin'])],
-      schema: {
-        body: {
-          type: 'object' as const,
-          required: ['status'],
-          properties: {
-            status: {
-              type: 'string' as const,
-              enum: ['pending', 'processing', 'completed', 'failed'] as const,
-            },
-            reference: { type: 'string' as const },
-          },
-          additionalProperties: false,
-        },
-      },
-    },
-    async (request, reply) => {
-      const { id } = request.params as { id: string };
-      const { status, reference } = request.body as {
-        status: PaymentStatus;
-        reference?: string;
-      };
-      const user = getAuthUser(request);
-
-      // 1. Verify payment exists
-      const { data: payment, error: paymentErr } = await supabase
+      // Create initial payment row
+      const { error: payErr } = await supabase
         .from('payments')
-        .select('id, status, procurement_id')
-        .eq('id', id)
-        .single();
-
-      if (paymentErr || !payment) {
-        return reply.status(400).send({
-          error: 'Bad Request',
-          message: `Payment with id '${id}' does not exist`,
-        });
-      }
-
-      // 2. Verify payment belongs to a procurement that's actually been marked complete
-      //    Only allow marking payment complete if procurement exists and is verified
-      const { data: procurement, error: procureErr } = await supabase
-        .from('procurements')
-        .select('id, status, booking_id')
-        .eq('id', payment.procurement_id)
-        .single();
-
-      if (procureErr || !procurement) {
-        return reply.status(400).send({
-          error: 'Bad Request',
-          message: 'Payment has no associated procurement',
-        });
-      }
-
-      const { data: booking, error: bookingErr } = await supabase
-        .from('bookings')
-        .select('id, slot_id')
-        .eq('id', procurement.booking_id)
-        .single();
-
-      if (bookingErr || !booking) {
-        return reply.status(400).send({
-          error: 'Bad Request',
-          message: 'Procurement has no associated booking',
-        });
-      }
-
-      // 3. If setting status to 'completed', verify procurement is verified
-      if (status === 'completed' && procurement.status !== 'verified') {
-        return reply.status(409).send({
-          error: 'Conflict',
-          message: `Cannot mark payment complete: procurement status is '${procurement.status}', expected 'verified'`,
-        });
-      }
-
-      // 4. Update payment with real data
-      const { data: updatedPayment, error: updateErr } = await supabase
-        .from('payments')
-        .update({
-          status,
-          ...(reference !== undefined ? { reference } : {}),
+        .insert({
+          procurement_id: body.booking_id,
+          status: 'pending',
+          reference: '',
           updated_at: new Date().toISOString(),
-        })
-        .eq('id', id)
-        .select()
-        .single();
+        });
 
-      if (updateErr) throw updateErr;
+      if (payErr) throw payErr;
 
-      return reply.send(updatedPayment);
+      // Update booking to completed
+      await supabase
+        .from('bookings')
+        .update({ status: 'completed' })
+        .eq('id', body.booking_id);
+
+      // Audit log
+      const user = (request as any).user;
+      await supabase.from('audit_logs').insert({
+        actor: user.id,
+        action: 'POST /staff/procurement',
+        entity: body.booking_id,
+        new_value: { quantity: body.quantity, price: body.price, quality_status: body.quality_status }
+      });
+
+      return reply.status(201).send(procurement);
     }
   );
 }

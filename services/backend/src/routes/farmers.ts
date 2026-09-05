@@ -140,7 +140,7 @@ export async function farmerRoutes(fastify: FastifyInstance): Promise<void> {
     // Verify farmer exists
     const { data: farmer, error: farmerErr } = await supabase
       .from('farmers')
-      .select('id, name, phone')
+      .select('id, name, phone, preferred_mandi_id, crop')
       .eq('id', id)
       .single();
 
@@ -149,6 +149,27 @@ export async function farmerRoutes(fastify: FastifyInstance): Promise<void> {
         error: 'Not Found',
         message: 'Farmer not found',
       });
+    }
+
+    let mandiDetails: any = null;
+    if (farmer.preferred_mandi_id) {
+      const { data: mandi } = await supabase
+        .from('mandis')
+        .select('*')
+        .eq('id', farmer.preferred_mandi_id)
+        .maybeSingle();
+
+      if (mandi) {
+        mandiDetails = {
+          id: mandi.id,
+          name: mandi.name,
+          district: mandi.district,
+          daily_capacity: mandi.daily_capacity,
+          working_hours: mandi.working_hours,
+          latitude: (mandi as any).latitude ?? null,
+          longitude: (mandi as any).longitude ?? null,
+        };
+      }
     }
 
     // Get all bookings for this farmer (most recent first)
@@ -192,6 +213,9 @@ export async function farmerRoutes(fastify: FastifyInstance): Promise<void> {
         id: farmer.id,
         name: farmer.name,
         phone: farmer.phone,
+        preferred_mandi_id: farmer.preferred_mandi_id || null,
+        crop: farmer.crop || null,
+        mandi: mandiDetails,
       },
       total_bookings: enrichedBookings.length,
       bookings: enrichedBookings,
