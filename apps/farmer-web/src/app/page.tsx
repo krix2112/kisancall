@@ -252,14 +252,12 @@ export default function MasterHomepage() {
               </Link>
 
               {/* Procurement Staff Portal */}
-              <a
-                href="http://localhost:3000/login"
-                target="_blank"
-                rel="noreferrer"
+              <Link
+                href="/staff/login"
                 className="inline-flex items-center justify-center px-4 py-2 rounded-lg text-xs font-bold text-charcoal-800 bg-stonebg-100 hover:bg-stonebg-200 border border-stonebg-300 transition-all cursor-pointer"
               >
                 <span>🏢 केंद्र लॉगिन (Staff)</span>
-              </a>
+              </Link>
             </div>
 
             {/* Mobile Hamburger Button */}
@@ -288,9 +286,9 @@ export default function MasterHomepage() {
               <Link href="/farmer" className="w-full text-center py-2.5 rounded-md bg-brand-900 text-white font-semibold text-sm">
                 🌾 किसान सेवा पोर्टल (Farmer Access)
               </Link>
-              <a href="http://localhost:3000/login" target="_blank" rel="noreferrer" className="w-full text-center py-2.5 rounded-md bg-stonebg-100 text-charcoal-800 border border-stonebg-300 font-semibold text-sm">
+              <Link href="/staff/login" className="w-full text-center py-2.5 rounded-md bg-stonebg-100 text-charcoal-800 border border-stonebg-300 font-semibold text-sm">
                 🏢 केंद्र लॉगिन (Staff Dashboard)
-              </a>
+              </Link>
             </div>
           </div>
         )}
@@ -361,14 +359,12 @@ export default function MasterHomepage() {
                   <span className="transition-transform group-hover:translate-x-1 font-mono">→</span>
                 </Link>
 
-                <a
-                  href="http://localhost:3000/login"
-                  target="_blank"
-                  rel="noreferrer"
+                <Link
+                  href="/staff/login"
                   className="inline-flex items-center justify-center px-5 py-4 rounded-xl text-sm font-semibold text-stone-200 bg-white/10 hover:bg-white/15 border border-white/20 backdrop-blur-sm transition-all cursor-pointer"
                 >
                   <span>🏢 उपार्जन केंद्र पोर्टल (Staff Desk)</span>
-                </a>
+                </Link>
               </div>
 
               {/* Social Proof Badges */}
@@ -1212,22 +1208,20 @@ export default function MasterHomepage() {
             <div className="bg-white rounded-2xl border border-stonebg-300 p-6 sm:p-8 shadow-md grid grid-cols-1 lg:grid-cols-12 gap-8 items-center animate-fadeIn">
               <div className="lg:col-span-5 space-y-4">
                 <span className="inline-block px-3 py-1 bg-sky-50 text-sky-800 border border-sky-200 text-xs font-bold rounded-md">
-                  STAFF DASHBOARD (PORT 3000)
+                  STAFF DASHBOARD (/staff)
                 </span>
                 <h3 className="text-2xl font-bold text-brand-950">Mandi Operator &amp; Supervisor Console</h3>
                 <p className="text-sm text-charcoal-700 leading-relaxed">
                   Gate arrival check-in with QR code scanners, live weighbridge procurement entry, digital J-Form signature approvals, and direct DBT bank disbursement execution.
                 </p>
                 <div className="pt-2">
-                  <a
-                    href="http://localhost:3000/login"
-                    target="_blank"
-                    rel="noreferrer"
+                  <Link
+                    href="/staff/login"
                     className="inline-flex items-center justify-center px-6 py-3.5 bg-brand-900 hover:bg-brand-800 text-white font-bold rounded-xl text-sm transition-colors shadow-sm gap-2 cursor-pointer"
                   >
                     <span>Launch Staff Dashboard</span>
                     <span>→</span>
-                  </a>
+                  </Link>
                 </div>
               </div>
 
@@ -1237,7 +1231,7 @@ export default function MasterHomepage() {
                     <span className="w-3 h-3 rounded-full bg-rose-500 inline-block"></span>
                     <span className="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
                     <span className="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span>
-                    <span className="text-slate-400 font-mono ml-2">http://localhost:3000/login</span>
+                    <span className="text-slate-400 font-mono ml-2">/staff/login</span>
                   </div>
                   <span className="text-sky-400 font-mono text-[11px]">● Ready</span>
                 </div>
@@ -1289,14 +1283,12 @@ export default function MasterHomepage() {
               <span>🌾 किसान सेवा पोर्टल (Farmer Access)</span>
               <span className="font-mono">→</span>
             </Link>
-            <a
-              href="http://localhost:3000/login"
-              target="_blank"
-              rel="noreferrer"
+            <Link
+              href="/staff/login"
               className="w-full sm:w-auto px-7 py-4 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold text-base transition-all cursor-pointer"
             >
               <span>🏢 उपार्जन केंद्र लॉगिन (Staff Console)</span>
-            </a>
+            </Link>
           </div>
 
           <div className="pt-6 inline-flex items-center gap-3 text-sm text-stone-300">
@@ -1347,8 +1339,8 @@ export default function MasterHomepage() {
                 <li><Link className="hover:text-white transition-colors" href="/farmer">किसान सेवा पोर्टल</Link></li>
                 <li><Link className="hover:text-white transition-colors" href="/farmer">Book Arrival Slot</Link></li>
                 <li><Link className="hover:text-white transition-colors" href="/farmer">PFMS DBT Tracking</Link></li>
-                <li><a className="hover:text-white transition-colors" href="http://localhost:3000/login">Mandi Operator Desk</a></li>
-                <li><a className="hover:text-white transition-colors" href="http://localhost:3000/login">Staff Console</a></li>
+                <li><Link className="hover:text-white transition-colors" href="/staff/login">Mandi Operator Desk</Link></li>
+                <li><Link className="hover:text-white transition-colors" href="/staff/login">Staff Console</Link></li>
               </ul>
             </div>
 
