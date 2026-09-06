@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import FarmerHeader from '@/components/farmer/FarmerHeader';
+import FarmerBottomNav from '@/components/farmer/FarmerBottomNav';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { FALLBACK_STATUS, FarmerStatusData } from '@/lib/mockData';
 import { farmerApi } from '@/services/api';
@@ -476,21 +478,88 @@ export default function FarmerWebPage() {
               </div>
             </div>
 
-            {/* MODULE 4: Payment & DBT Status */}
-            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3">
-              <div className="flex justify-between items-center border-b pb-2">
-                <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-                  💳 डीबीटी भुगतान / Payment Status
-                </h3>
-                <span className="bg-emerald-100 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
-                  {statusData?.bookings?.[0]?.payment?.status || 'Pending'}
-                </span>
+              {/* MODULE 4: Payment & DBT Status */}
+            <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-3 flex flex-col justify-between">
+              <div>
+                <div className="flex justify-between items-center border-b pb-2">
+                  <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                    💳 डीबीटी भुगतान / Payment Status
+                  </h3>
+                  <span className="bg-emerald-100 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
+                    {statusData?.bookings?.[0]?.payment?.status || 'Pending'}
+                  </span>
+                </div>
+                <div className="space-y-1.5 text-xs text-slate-700 mt-3">
+                  <p><span className="font-semibold text-slate-500">Amount:</span> <strong className="text-slate-900 text-sm font-mono">₹{((statusData?.bookings?.[0]?.procurement?.quantity || 0) * (statusData?.bookings?.[0]?.procurement?.price || 0)).toLocaleString('en-IN')}</strong></p>
+                  <p><span className="font-semibold text-slate-500">Reference:</span> <span className="font-mono text-slate-800">{statusData?.bookings?.[0]?.payment?.reference || 'N/A'}</span></p>
+                  <p><span className="font-semibold text-slate-500">Updated:</span> {statusData?.bookings?.[0]?.payment?.updated_at ? new Date(statusData.bookings[0].payment.updated_at).toLocaleDateString() : 'N/A'}</p>
+                </div>
               </div>
-              <div className="space-y-1.5 text-xs text-slate-700">
-                <p><span className="font-semibold text-slate-500">Amount:</span> <strong className="text-slate-900 text-sm">₹{((statusData?.bookings?.[0]?.procurement?.quantity || 0) * (statusData?.bookings?.[0]?.procurement?.price || 0)).toLocaleString('en-IN')}</strong></p>
-                <p><span className="font-semibold text-slate-500">Reference:</span> <span className="font-mono text-slate-800">{statusData?.bookings?.[0]?.payment?.reference || 'N/A'}</span></p>
-                <p><span className="font-semibold text-slate-500">Updated:</span> {statusData?.bookings?.[0]?.payment?.updated_at ? new Date(statusData.bookings[0].payment.updated_at).toLocaleDateString() : 'N/A'}</p>
-              </div>
+
+              <Link
+                href="/farmer/payments"
+                className="w-full bg-emerald-50 hover:bg-emerald-100 text-[#00450d] text-xs font-bold py-2 px-3 rounded-lg border border-emerald-200 text-center transition-colors"
+              >
+                पूरा भुगतान विवरण देखें (View DBT Details) →
+              </Link>
+            </div>
+          </div>
+
+          {/* FARMER SERVICE SUITE: 5 QUICK HUBS */}
+          <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+            <div className="flex items-center justify-between border-b pb-3">
+              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <span>🌾</span>
+                <span>किसान डिजिटल सेवाएं (Kisan Digital Services)</span>
+              </h3>
+              <span className="text-xs text-stone-500">5 Services Active</span>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+              <Link
+                href="/farmer/prices"
+                className="p-3.5 bg-emerald-50/60 hover:bg-emerald-100/80 border border-emerald-200/80 rounded-xl flex flex-col items-center text-center transition-all hover:scale-[1.02] shadow-2xs group"
+              >
+                <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">📊</span>
+                <strong className="text-xs font-bold text-[#00450d]">मंडी भाव</strong>
+                <span className="text-[10px] text-stone-600">MSP &amp; Rates</span>
+              </Link>
+
+              <Link
+                href="/farmer/payments"
+                className="p-3.5 bg-emerald-50/60 hover:bg-emerald-100/80 border border-emerald-200/80 rounded-xl flex flex-col items-center text-center transition-all hover:scale-[1.02] shadow-2xs group"
+              >
+                <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">💳</span>
+                <strong className="text-xs font-bold text-[#00450d]">डीबीटी भुगतान</strong>
+                <span className="text-[10px] text-stone-600">PFMS Status</span>
+              </Link>
+
+              <Link
+                href="/farmer/slips"
+                className="p-3.5 bg-emerald-50/60 hover:bg-emerald-100/80 border border-emerald-200/80 rounded-xl flex flex-col items-center text-center transition-all hover:scale-[1.02] shadow-2xs group"
+              >
+                <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">📄</span>
+                <strong className="text-xs font-bold text-[#00450d]">खरीद पर्ची</strong>
+                <span className="text-[10px] text-stone-600">J-Form Slip</span>
+              </Link>
+
+              <Link
+                href="/farmer/call-history"
+                className="p-3.5 bg-emerald-50/60 hover:bg-emerald-100/80 border border-emerald-200/80 rounded-xl flex flex-col items-center text-center transition-all hover:scale-[1.02] shadow-2xs group"
+              >
+                <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">📞</span>
+                <strong className="text-xs font-bold text-[#00450d]">कॉल इतिहास</strong>
+                <span className="text-[10px] text-stone-600">Voice Logs</span>
+              </Link>
+
+              <Link
+                href="/farmer/profile"
+                className="col-span-2 sm:col-span-1 p-3.5 bg-emerald-50/60 hover:bg-emerald-100/80 border border-emerald-200/80 rounded-xl flex flex-col items-center text-center transition-all hover:scale-[1.02] shadow-2xs group"
+              >
+                <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">👤</span>
+                <strong className="text-xs font-bold text-[#00450d]">किसान प्रोफ़ाइल</strong>
+                <span className="text-[10px] text-stone-600">KYC &amp; Settings</span>
+              </Link>
             </div>
           </div>
 
@@ -688,6 +757,9 @@ export default function FarmerWebPage() {
           )}
         </div>
       )}
+
+      {/* Persistent Farmer Bottom Navigation */}
+      <FarmerBottomNav />
     </main>
   );
 }
