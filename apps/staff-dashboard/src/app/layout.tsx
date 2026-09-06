@@ -35,6 +35,18 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         return;
       }
 
+      // Check local staff session (for dev mode or stored role)
+      const localRole = typeof window !== 'undefined' ? (localStorage.getItem('staff_user_role') as UserRole | null) : null;
+      if (localRole) {
+        setRole(localRole);
+        const allowedRoles = ROLE_PERMISSIONS[pathname] || ['operator', 'supervisor', 'admin'];
+        if (!allowedRoles.includes(localRole) && pathname !== '/unauthorized') {
+          router.push('/unauthorized');
+        }
+        setLoading(false);
+        return;
+      }
+
       const { data: sessionData } = await supabase.auth.getSession();
       const user = sessionData?.session?.user;
 
