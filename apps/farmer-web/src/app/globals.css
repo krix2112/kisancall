@@ -7,42 +7,8 @@
   50% { opacity: 0.6; transform: scale(1.15); }
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes slideUpFade {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes drawChart {
-  from { stroke-dashoffset: 1000; }
-  to { stroke-dashoffset: 0; }
-}
-
-@keyframes shimmerWave {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
 .pulse-dot {
   animation: pulse-subtle 2s infinite ease-in-out;
-}
-
-.animate-fadeIn {
-  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.animate-slideUp {
-  animation: slideUpFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-.animate-chart-line {
-  stroke-dasharray: 1000;
-  stroke-dashoffset: 1000;
-  animation: drawChart 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .ticker-bar {
@@ -61,13 +27,4 @@
 
 .font-hindi {
   font-family: 'Mukta', 'Noto Sans Devanagari', sans-serif;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *, ::before, ::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
 }
