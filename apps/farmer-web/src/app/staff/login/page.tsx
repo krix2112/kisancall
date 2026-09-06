@@ -141,9 +141,13 @@ export default function StaffLoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-900 px-4 py-8">
       <div className="max-w-md w-full bg-white rounded-2xl p-8 shadow-xl space-y-6">
-        <div className="text-center space-y-1.5">
-          <Link href="/" className="inline-flex items-center justify-center w-12 h-12 bg-emerald-100 text-emerald-800 rounded-xl text-2xl mb-1 hover:scale-105 transition-transform">
-            🌾
+        <div className="text-center space-y-1.5 flex flex-col items-center">
+          <Link href="/" className="inline-block hover:scale-105 transition-transform mb-1">
+            <img
+              src="/logo.png"
+              alt="KisanCall"
+              className="h-16 w-auto object-contain rounded-xl bg-white p-1 border border-stone-200 shadow-xs mx-auto"
+            />
           </Link>
           <h1 className="text-2xl font-extrabold text-emerald-900">KisanCall Staff</h1>
           <p className="text-xs text-slate-500">Mandi Operator &amp; Staff Authentication Portal</p>

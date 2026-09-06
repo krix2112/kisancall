@@ -188,9 +188,11 @@ export default function MasterHomepage() {
             {/* Brand Logo & Tagline */}
             <div className="flex items-center gap-4">
               <Link href="/" className="flex items-center gap-3 group focus:outline-hidden">
-                <div className="w-11 h-11 rounded-lg bg-brand-900 flex items-center justify-center text-harvest-light shadow-inner transition-transform group-hover:scale-105">
-                  <span className="text-2xl">🌾</span>
-                </div>
+                <img
+                  src="/logo.png"
+                  alt="KisanCall Logo"
+                  className="h-11 w-auto object-contain rounded-md bg-white p-0.5 border border-stone-200 shadow-2xs group-hover:scale-105 transition-transform"
+                />
                 <div className="flex flex-col">
                   <div className="flex items-center gap-1.5">
                     <span className="font-extrabold text-xl tracking-tight text-brand-950 font-sans">
@@ -1304,13 +1306,20 @@ export default function MasterHomepage() {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-8 pb-12 border-b border-white/10">
             {/* Brand Column */}
             <div className="col-span-2 space-y-4">
-              <div className="flex items-center gap-2">
-                <span className="font-extrabold text-xl tracking-tight text-white font-sans">
-                  KISAN<span className="text-harvest">CALL</span>
-                </span>
-                <span className="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded bg-brand-900 text-harvest-light border border-brand-800">
-                  Govt Partner
-                </span>
+              <div className="flex items-center gap-3">
+                <img
+                  src="/logo.png"
+                  alt="KisanCall Logo"
+                  className="h-10 w-auto object-contain rounded-md bg-white p-0.5 border border-white/20 shadow-xs"
+                />
+                <div className="flex items-center gap-2">
+                  <span className="font-extrabold text-xl tracking-tight text-white font-sans">
+                    KISAN<span className="text-harvest">CALL</span>
+                  </span>
+                  <span className="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded bg-brand-900 text-harvest-light border border-brand-800">
+                    Govt Partner
+                  </span>
+                </div>
               </div>
               <p className="font-hindi text-stone-300 text-sm max-w-sm">
                 कृषि उपज उपार्जन समन्वय एवं पारदर्शी डिजिटल तुलाई निगरानी प्रणाली।

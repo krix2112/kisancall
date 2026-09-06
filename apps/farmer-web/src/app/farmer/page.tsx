@@ -219,10 +219,13 @@ export default function FarmerWebPage() {
 
             {/* Header */}
             <div className="flex flex-col items-center text-center mb-8">
-              <div className="w-16 h-16 rounded-2xl bg-[#00450d] flex items-center justify-center mb-4 shadow-sm relative overflow-hidden group">
-                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-                <span className="text-white text-3xl relative z-10">🌾</span>
-              </div>
+              <Link href="/" className="mb-3 hover:scale-105 transition-transform inline-block">
+                <img
+                  src="/logo.png"
+                  alt="KisanCall"
+                  className="h-16 w-auto object-contain rounded-xl bg-white p-1 border border-stone-200 shadow-xs"
+                />
+              </Link>
               <h1 className="text-[28px] leading-[36px] font-bold text-[#191d17] mb-2">
                 {step === 'phone' ? 'Kisan Login' : 'OTP Darj Karein'}
               </h1>

@@ -29,7 +29,11 @@ export function Sidebar({
       {/* Mobile Top Header (Hamburger) */}
       <div className="lg:hidden bg-slate-900 text-white p-4 flex items-center justify-between shadow-md">
         <div className="flex items-center space-x-2">
-          <span className="text-xl">🌾</span>
+          <img
+            src="/logo.png"
+            alt="KisanCall"
+            className="h-8 w-auto object-contain rounded bg-white p-0.5"
+          />
           <h1 className="text-lg font-bold text-emerald-400">KisanCall Staff</h1>
         </div>
         <button
@@ -56,11 +60,15 @@ export function Sidebar({
       >
         <div className="space-y-6">
           <div className="hidden lg:block">
-            <Link href="/" className="flex items-center space-x-2 hover:opacity-90">
-              <span className="text-2xl">🌾</span>
+            <Link href="/" className="flex items-center space-x-2.5 hover:opacity-90">
+              <img
+                src="/logo.png"
+                alt="KisanCall"
+                className="h-9 w-auto object-contain rounded bg-white p-0.5 border border-slate-700 shadow-2xs"
+              />
               <h1 className="text-xl font-bold text-emerald-400">KisanCall</h1>
             </Link>
-            <p className="text-xs text-slate-400 mt-1">Mandi Staff &amp; Operator Console</p>
+            <p className="text-xs text-slate-400 mt-1.5">Mandi Staff &amp; Operator Console</p>
           </div>
 
           <div className="bg-slate-800 p-3 rounded-lg border border-slate-700 space-y-1.5">

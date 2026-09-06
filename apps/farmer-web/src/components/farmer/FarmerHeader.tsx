@@ -44,7 +44,7 @@ export default function FarmerHeader({
             {showBack ? (
               <button
                 onClick={onBack || (() => window.history.back())}
-                className="w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 active:scale-95 text-stone-800 flex items-center justify-center transition-all cursor-pointer shadow-xs"
+                className="w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 active:scale-95 text-stone-800 flex items-center justify-center transition-all cursor-pointer shadow-xs flex-shrink-0"
                 title="पीछे जाएं (Go Back)"
                 type="button"
               >
@@ -53,11 +53,12 @@ export default function FarmerHeader({
                 </svg>
               </button>
             ) : (
-              <Link href="/farmer" className="w-9 h-9 rounded-full bg-emerald-800/10 flex items-center justify-center text-emerald-900 transition-transform hover:scale-105">
-                <svg className="w-5 h-5 text-[#00450d]" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
-                </svg>
+              <Link href="/farmer" className="flex-shrink-0 transition-transform hover:scale-105">
+                <img
+                  src="/logo.png"
+                  alt="KisanCall"
+                  className="h-9 w-auto object-contain rounded-md bg-white p-0.5 border border-stone-200 shadow-2xs"
+                />
               </Link>
             )}
 
