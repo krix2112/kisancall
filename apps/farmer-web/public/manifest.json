@@ -1,0 +1,38 @@
+{
+  "name": "KisanCall | पारदर्शी कृषि उपार्जन",
+  "short_name": "KisanCall",
+  "description": "Indian Farmer Mandi Slot Booking, Live Queue Tracking, Electronic Weighing & DBT Tracking",
+  "start_url": "/farmer",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#07240E",
+  "theme_color": "#0B3B18",
+  "categories": ["business", "government", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

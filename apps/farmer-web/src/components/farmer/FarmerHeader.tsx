@@ -40,11 +40,11 @@ export default function FarmerHeader({
     <>
       <header className="sticky top-0 z-40 bg-[#f7fbf1]/95 backdrop-blur-md border-b border-stone-200/80 px-4 py-3 shadow-[0_1px_6px_rgba(0,0,0,0.03)]">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2.5">
             {showBack ? (
               <button
                 onClick={onBack || (() => window.history.back())}
-                className="w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 active:scale-95 text-stone-800 flex items-center justify-center transition-all cursor-pointer shadow-xs flex-shrink-0"
+                className="min-h-[44px] min-w-[44px] rounded-full bg-stone-100 hover:bg-stone-200 active:scale-95 text-stone-800 flex items-center justify-center transition-all cursor-pointer shadow-xs flex-shrink-0"
                 title="पीछे जाएं (Go Back)"
                 type="button"
               >
@@ -53,11 +53,11 @@ export default function FarmerHeader({
                 </svg>
               </button>
             ) : (
-              <Link href="/farmer" className="flex-shrink-0 transition-transform hover:scale-105">
+              <Link href="/farmer" className="flex-shrink-0 transition-transform hover:scale-105 min-h-[44px] flex items-center">
                 <img
                   src="/logo.png"
                   alt="KisanCall"
-                  className="h-9 w-auto object-contain rounded-md bg-white p-0.5 border border-stone-200 shadow-2xs"
+                  className="h-10 w-auto object-contain rounded-md bg-white p-0.5 border border-stone-200 shadow-2xs"
                 />
               </Link>
             )}
@@ -77,7 +77,7 @@ export default function FarmerHeader({
             {/* Listen Audio Voice Button */}
             <button
               onClick={handlePlayAudio}
-              className={`h-8 px-2.5 rounded-full flex items-center gap-1 text-xs font-bold transition-all shadow-xs cursor-pointer ${
+              className={`min-h-[44px] px-3 rounded-full flex items-center gap-1.5 text-xs font-bold transition-all shadow-xs cursor-pointer ${
                 isPlayingAudio
                   ? 'bg-emerald-700 text-white animate-pulse'
                   : 'bg-emerald-100 hover:bg-emerald-200 text-emerald-900 border border-emerald-300/60 active:scale-95'
@@ -94,7 +94,7 @@ export default function FarmerHeader({
             {/* Helpline Modal Trigger */}
             <button
               onClick={() => setShowVoiceModal(true)}
-              className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 flex items-center justify-center text-xs transition-colors cursor-pointer"
+              className="min-h-[44px] min-w-[44px] rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 flex items-center justify-center text-sm transition-colors cursor-pointer"
               title="KisanCall हेल्पलाइन (1800-180-1551)"
               type="button"
             >
@@ -104,7 +104,7 @@ export default function FarmerHeader({
             {/* Farmer Profile Avatar */}
             <Link
               href="/farmer/profile"
-              className="w-8 h-8 rounded-full bg-[#00450d] text-white flex items-center justify-center text-xs font-bold shadow-sm hover:ring-2 hover:ring-emerald-600 transition-all"
+              className="min-h-[44px] min-w-[44px] rounded-full bg-[#00450d] text-white flex items-center justify-center text-xs font-bold shadow-sm hover:ring-2 hover:ring-emerald-600 transition-all cursor-pointer"
               title="किसान प्रोफ़ाइल"
             >
               रK

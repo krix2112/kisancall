@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import FarmerHeader from '@/components/farmer/FarmerHeader';
-import FarmerBottomNav from '@/components/farmer/FarmerBottomNav';
 
 export default function FarmerSlipsPage() {
   const [slipState, setSlipState] = useState<'verified' | 'processing' | 'attention'>('verified');
@@ -405,9 +404,6 @@ export default function FarmerSlipsPage() {
         </div>
 
       </main>
-
-      {/* Persistent Bottom Nav */}
-      <FarmerBottomNav />
     </div>
   );
 }

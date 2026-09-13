@@ -1,15 +1,18 @@
 'use client';
 
-import React from 'react';
+import React, { Suspense } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 
-export default function FarmerBottomNav() {
+function FarmerBottomNavInner() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const action = searchParams?.get('action');
 
   const navItems = [
     {
       href: '/farmer',
+      id: 'home',
       label: 'Home',
       hindi: 'होम',
       icon: (
@@ -17,11 +20,33 @@ export default function FarmerBottomNav() {
           <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
         </svg>
       ),
-      exact: true,
+    },
+    {
+      href: '/farmer?action=book',
+      id: 'book',
+      label: 'Book Slot',
+      hindi: 'स्लॉट',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      ),
+    },
+    {
+      href: '/farmer#queue-status',
+      id: 'queue',
+      label: 'Queue',
+      hindi: 'कतार',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      ),
     },
     {
       href: '/farmer/prices',
-      label: 'Price',
+      id: 'prices',
+      label: 'Prices',
       hindi: 'भाव',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
@@ -31,7 +56,8 @@ export default function FarmerBottomNav() {
     },
     {
       href: '/farmer/payments',
-      label: 'Payment',
+      id: 'payments',
+      label: 'Payments',
       hindi: 'भुगतान',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
@@ -39,58 +65,55 @@ export default function FarmerBottomNav() {
         </svg>
       ),
     },
-    {
-      href: '/farmer/slips',
-      label: 'Slips',
-      hindi: 'पर्ची (J-Form)',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-      ),
-    },
-    {
-      href: '/farmer/call-history',
-      label: 'Calls',
-      hindi: 'कॉल',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-        </svg>
-      ),
-    },
-    {
-      href: '/farmer/profile',
-      label: 'Profile',
-      hindi: 'खाता',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
-      ),
-    },
   ];
 
-  const isActive = (href: string, exact?: boolean) => {
-    if (exact) {
-      return pathname === href;
+  const getIsActive = (item: typeof navItems[0]) => {
+    if (item.id === 'book') {
+      return action === 'book';
     }
-    return pathname.startsWith(href);
+    if (item.id === 'home') {
+      return pathname === '/farmer' && !action;
+    }
+    if (item.id === 'prices') {
+      return pathname?.startsWith('/farmer/prices') || pathname?.startsWith('/dashboard/mandi-prices');
+    }
+    if (item.id === 'payments') {
+      return pathname?.startsWith('/farmer/payments') || pathname?.startsWith('/dashboard/payment');
+    }
+    return false;
+  };
+
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, item: typeof navItems[0]) => {
+    if (item.id === 'queue') {
+      if (pathname === '/farmer') {
+        e.preventDefault();
+        const el = document.getElementById('queue-status');
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          el.classList.add('ring-4', 'ring-[#acf4a4]');
+          setTimeout(() => el.classList.remove('ring-4', 'ring-[#acf4a4]'), 1800);
+        }
+      }
+    }
   };
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-md border-t border-stone-200 z-40 py-2 px-2 shadow-[0_-2px_10px_rgba(0,0,0,0.04)]">
-      <div className="max-w-md mx-auto grid grid-cols-6 gap-1">
+    <nav
+      aria-label="Mobile Navigation"
+      className="md:hidden fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-lg border-t border-stone-200/90 z-40 pt-1 pb-[calc(0.5rem+env(safe-area-inset-bottom,0px))] px-1 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]"
+    >
+      <div className="max-w-md mx-auto grid grid-cols-5 gap-0.5">
         {navItems.map((item) => {
-          const active = isActive(item.href, item.exact);
+          const active = getIsActive(item);
           return (
             <Link
-              key={item.href}
+              key={item.id}
               href={item.href}
-              className={`flex flex-col items-center justify-center py-1 transition-all rounded-lg ${
+              onClick={(e) => handleClick(e, item)}
+              className={`flex flex-col items-center justify-center min-h-[48px] py-1 px-1 rounded-xl transition-all select-none active:scale-95 ${
                 active
-                  ? 'text-[#00450d] font-bold'
-                  : 'text-stone-500 hover:text-stone-800'
+                  ? 'text-[#00450d] font-extrabold'
+                  : 'text-stone-500 hover:text-stone-900 font-medium'
               }`}
             >
               <div
@@ -100,13 +123,24 @@ export default function FarmerBottomNav() {
               >
                 {item.icon}
               </div>
-              <span className="text-[10px] tracking-tight leading-none text-center">
+              <span className="text-[11px] font-semibold tracking-tight leading-none text-center">
                 {item.label}
+              </span>
+              <span className="text-[9px] font-hindi text-stone-600 tracking-tight leading-tight mt-0.5">
+                {item.hindi}
               </span>
             </Link>
           );
         })}
       </div>
     </nav>
+  );
+}
+
+export default function FarmerBottomNav() {
+  return (
+    <Suspense fallback={null}>
+      <FarmerBottomNavInner />
+    </Suspense>
   );
 }

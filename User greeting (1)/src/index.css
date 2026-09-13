@@ -1,0 +1,93 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700&family=Caveat:wght@600;700&display=swap');
+@import 'tailwindcss';
+
+@theme inline {
+  --color-primary: #2D6A4F;
+  --color-primary-light: #EAF5EE;
+  --color-accent: #D9A441;
+  --color-cream: #FDFBF5;
+  --color-charcoal: #2B2B2B;
+  --color-muted: #6B6B6B;
+  --font-sans: 'Poppins', sans-serif;
+  --font-body: 'Nunito', sans-serif;
+  --font-handwritten: 'Caveat', cursive;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2D6A4F44 transparent;
+}
+*::-webkit-scrollbar { width: 4px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: #2D6A4F44; border-radius: 99px; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: #FDFBF5;
+  color: #2B2B2B;
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 8px 2px #2D6A4F55; }
+  50% { box-shadow: 0 0 18px 6px #2D6A4F88; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.glow-green {
+  animation: glow-pulse 2.4s ease-in-out infinite;
+}
+
+.float-anim {
+  animation: float 3s ease-in-out infinite;
+}
+
+.card-hover {
+  transition: transform 0.22s cubic-bezier(.34,1.56,.64,1), box-shadow 0.22s ease;
+}
+.card-hover:hover {
+  transform: translateY(-5px) scale(1.012);
+  box-shadow: 0 16px 48px 0 #2D6A4F22, 0 4px 16px 0 #00000018;
+}
+
+.service-tile:hover {
+  transform: translateY(-6px) scale(1.06);
+  box-shadow: 0 12px 36px 0 #2D6A4F33;
+}
+.service-tile {
+  transition: transform 0.22s cubic-bezier(.34,1.56,.64,1), box-shadow 0.22s ease;
+}
+
+.nav-item:hover {
+  background: #EAF5EE;
+  color: #2D6A4F;
+  transform: translateX(4px);
+}
+.nav-item {
+  transition: all 0.18s ease;
+}
+
+.btn-glow:hover {
+  box-shadow: 0 0 22px 6px #2D6A4F88;
+  transform: scale(1.04);
+}
+.btn-glow {
+  transition: all 0.2s ease;
+}
+
+.badge-live {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+@keyframes soundWave {
+  from { transform: scaleY(0.4); }
+  to   { transform: scaleY(1); }
+}

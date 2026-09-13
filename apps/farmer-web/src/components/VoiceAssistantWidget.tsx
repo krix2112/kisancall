@@ -180,7 +180,7 @@ export default function VoiceAssistantWidget() {
   return (
     <>
       {/* Floating Trigger Button */}
-      <div className="fixed bottom-20 right-5 md:bottom-6 md:right-6 z-50">
+      <div className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] left-4 md:bottom-6 md:left-auto md:right-56 z-40">
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="group relative flex items-center gap-2.5 px-4 py-3 bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-800 text-white rounded-full shadow-2xl hover:scale-105 active:scale-95 transition-all border-2 border-emerald-400/30"

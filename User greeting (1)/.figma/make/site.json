@@ -1,0 +1,10 @@
+{
+  "description": "Offers a simple, user-friendly platform for seamless communication and quick messaging to connect users efficiently.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

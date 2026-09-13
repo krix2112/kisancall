@@ -1,6 +1,71 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Nunito:wght@400;500;600;700&family=Caveat:wght@600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ─── iOS Safe Area Insets & Mobile Native Defaults ─── */
+:root {
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+body {
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Safe area padding helpers */
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
+}
+
+.pb-safe-nav {
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+}
+
+.pt-safe {
+  padding-top: max(0.5rem, env(safe-area-inset-top, 0px));
+}
+
+/* Prevent iOS Safari 16px auto-zoom on inputs while keeping text crisp */
+@media screen and (max-width: 768px) {
+  input[type="text"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="search"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Minimum 44x44px Touch Target Standard */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Outdoor / Sunlight glare high-contrast readability */
+.farmer-card {
+  border: 1px solid #d1dbcd;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
 
 @keyframes pulse-subtle {
   0%, 100% { opacity: 1; transform: scale(1); }
@@ -27,4 +92,77 @@
 
 .font-hindi {
   font-family: 'Mukta', 'Noto Sans Devanagari', sans-serif;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2D6A4F44 transparent;
+}
+*::-webkit-scrollbar { width: 4px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: #2D6A4F44; border-radius: 99px; }
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 8px 2px #2D6A4F55; }
+  50% { box-shadow: 0 0 18px 6px #2D6A4F88; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+
+.glow-green {
+  animation: glow-pulse 2.4s ease-in-out infinite;
+}
+
+.float-anim {
+  animation: float 3s ease-in-out infinite;
+}
+
+.card-hover {
+  transition: transform 0.22s cubic-bezier(.34,1.56,.64,1), box-shadow 0.22s ease;
+}
+.card-hover:hover {
+  transform: translateY(-5px) scale(1.012);
+  box-shadow: 0 16px 48px 0 #2D6A4F22, 0 4px 16px 0 #00000018;
+}
+
+.service-tile:hover {
+  transform: translateY(-6px) scale(1.06);
+  box-shadow: 0 12px 36px 0 #2D6A4F33;
+}
+.service-tile {
+  transition: transform 0.22s cubic-bezier(.34,1.56,.64,1), box-shadow 0.22s ease;
+}
+
+.nav-item:hover {
+  background: #EAF5EE;
+  color: #2D6A4F;
+  transform: translateX(4px);
+}
+.nav-item {
+  transition: all 0.18s ease;
+}
+
+.btn-glow:hover {
+  box-shadow: 0 0 22px 6px #2D6A4F88;
+  transform: scale(1.04);
+}
+.btn-glow {
+  transition: all 0.2s ease;
+}
+
+.badge-live {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+@keyframes soundWave {
+  from { transform: scaleY(0.4); }
+  to   { transform: scaleY(1); }
 }

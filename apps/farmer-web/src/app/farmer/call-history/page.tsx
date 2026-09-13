@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import FarmerHeader from '@/components/farmer/FarmerHeader';
-import FarmerBottomNav from '@/components/farmer/FarmerBottomNav';
 
 interface CallRecord {
   id: string;
@@ -374,9 +373,6 @@ export default function FarmerCallHistoryPage() {
           </div>
         </div>
       )}
-
-      {/* Persistent Bottom Nav */}
-      <FarmerBottomNav />
     </div>
   );
 }

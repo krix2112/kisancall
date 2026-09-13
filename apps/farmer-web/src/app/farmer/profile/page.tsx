@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import FarmerHeader from '@/components/farmer/FarmerHeader';
-import FarmerBottomNav from '@/components/farmer/FarmerBottomNav';
 
 export default function FarmerProfilePage() {
   const [profileState, setProfileState] = useState<'verified' | 'pending' | 'incomplete' | 'error'>('verified');
@@ -351,9 +350,6 @@ export default function FarmerProfilePage() {
           </div>
         </div>
       )}
-
-      {/* Persistent Bottom Nav */}
-      <FarmerBottomNav />
     </div>
   );
 }

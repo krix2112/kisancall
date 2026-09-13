@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import FarmerHeader from '@/components/farmer/FarmerHeader';
-import FarmerBottomNav from '@/components/farmer/FarmerBottomNav';
 
 export default function FarmerPaymentsPage() {
   const [activeTab, setActiveTab] = useState<'paid' | 'proc' | 'failed'>('paid');
@@ -319,9 +318,6 @@ export default function FarmerPaymentsPage() {
         )}
 
       </main>
-
-      {/* Persistent Bottom Nav */}
-      <FarmerBottomNav />
     </div>
   );
 }
