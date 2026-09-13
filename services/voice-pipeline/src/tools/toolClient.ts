@@ -61,12 +61,12 @@ export const httpToolClient = {
     }
   },
 
-  getPrice: async (farmerIdOrMandi: string, commodity: string = 'wheat'): Promise<PriceResult> => {
+  getPrice: async (farmerIdOrMandi: string, commodity: string = 'wheat', variety?: string, mandi?: string): Promise<PriceResult> => {
     try {
       const res = await fetch(`${BACKEND_URL}/voice/tool/get-price`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ farmer_id: farmerIdOrMandi, commodity }),
+        body: JSON.stringify({ farmer_id: farmerIdOrMandi, commodity, variety, mandi }),
       });
       if (!res.ok) {
         const errorBody = await res.text();
@@ -74,16 +74,22 @@ export const httpToolClient = {
       }
       const data = await res.json() as any;
       return {
-        minPrice: data.min_price ?? data.minPrice,
-        maxPrice: data.max_price ?? data.maxPrice,
-        modalPrice: data.modal_price ?? data.modalPrice,
+        commodity: data.commodity,
+        variety: data.variety,
+        minPrice: data.min_price ?? data.minPrice ?? 0,
+        maxPrice: data.max_price ?? data.maxPrice ?? 0,
+        modalPrice: data.modal_price ?? data.modalPrice ?? 0,
         date: data.date,
-        source: 'Agmarknet / DoCA Govt Data',
+        dateDisplay: data.date_display || data.date,
+        dateDisplayHi: data.date_display_hi || data.date,
+        isToday: Boolean(data.is_today),
+        stale: Boolean(data.stale || !data.is_today),
+        source: data.source || (data.market ? `Agmarknet (${data.market})` : 'Agmarknet / data.gov.in'),
       };
     } catch (err: any) {
       if (process.env.USE_MOCK_TOOLS === 'true') {
         console.warn('[HTTP Tool Client] Falling back to mock:', err.message);
-        return mockToolClient.getPrice(farmerIdOrMandi, commodity);
+        return mockToolClient.getPrice(farmerIdOrMandi, commodity, variety);
       }
       throw err;
     }

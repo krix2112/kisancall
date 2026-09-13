@@ -17,3 +17,6 @@ codes
 .system_generated
 .expo
 *.tsbuildinfo
+scratch*.*
+scratch_*.*
+*.js.map

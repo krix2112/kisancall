@@ -30,7 +30,7 @@ export async function bookingRoutes(fastify: FastifyInstance): Promise<void> {
     // 1. Verify farmer exists
     const { data: farmer, error: farmerErr } = await supabase
       .from('farmers')
-      .select('id')
+      .select('id, name, phone, crop')
       .eq('id', body.farmer_id)
       .single();
 
@@ -44,7 +44,7 @@ export async function bookingRoutes(fastify: FastifyInstance): Promise<void> {
     // 2. Verify slot exists and get capacity + mandi info
     const { data: slot, error: slotErr } = await supabase
       .from('slots')
-      .select('id, mandi_id, date, capacity')
+      .select('id, mandi_id, date, start_time, end_time, capacity')
       .eq('id', body.slot_id)
       .single();
 
@@ -128,6 +128,67 @@ export async function bookingRoutes(fastify: FastifyInstance): Promise<void> {
       throw insertErr;
     }
 
-    return reply.status(201).send(booking);
+    // 7. Trigger Twilio WhatsApp Alert (Non-blocking / Logged)
+    let whatsappResult = null;
+    try {
+      const { sendBookingConfirmedAlert } = await import('../services/whatsappService.js');
+      const { fetchPrices } = await import('../services/priceAdapter.js');
+
+      let modalPrice = 3100;
+      try {
+        const pResult = await fetchPrices(mandi?.name || 'Sehore', farmer.crop || 'Wheat');
+        if (pResult.prices[0]?.modal_price) {
+          modalPrice = Number(pResult.prices[0].modal_price);
+        }
+      } catch {}
+
+      whatsappResult = await sendBookingConfirmedAlert({
+        farmerName: farmer.name || 'Farmer',
+        farmerPhone: farmer.phone || process.env.ALERT_RECIPIENT_PHONE || '+919999999999',
+        token,
+        mandiName: mandi?.name || 'Mandi Central',
+        slotDate: slot.date,
+        startTime: slot.start_time,
+        endTime: slot.end_time,
+        crop: farmer.crop || 'Wheat',
+        modalPrice,
+      });
+    } catch (waErr: any) {
+      console.warn('[BookingsRoute] WhatsApp notification error:', waErr.message);
+    }
+
+    return reply.status(201).send({
+      ...booking,
+      whatsapp_notification: whatsappResult,
+    });
+  });
+
+  /**
+   * POST /alerts/whatsapp/send — Direct trigger for real WhatsApp alert testing
+   */
+  fastify.post('/alerts/whatsapp/send', async (request, reply) => {
+    const body = (request.body as Record<string, any>) || {};
+    const { sendWhatsAppMessage, sendBookingConfirmedAlert } = await import('../services/whatsappService.js');
+    const defaultRecipient = process.env.ALERT_RECIPIENT_PHONE || '+919999999999';
+
+    if (body.message) {
+      const result = await sendWhatsAppMessage(body.to || defaultRecipient, body.message);
+      return reply.send(result);
+    }
+
+    // Rich test booking alert with real data
+    const result = await sendBookingConfirmedAlert({
+      farmerName: body.farmerName || 'Ramesh Patel',
+      farmerPhone: body.to || defaultRecipient,
+      token: body.token || 'SEHORE-20260910-042',
+      mandiName: body.mandiName || 'Sehore APMC',
+      slotDate: body.slotDate || '2026-09-10',
+      startTime: body.startTime || '10:00 AM',
+      endTime: body.endTime || '12:00 PM',
+      crop: body.crop || 'Wheat (Lokwan FAQ)',
+      modalPrice: body.modalPrice || 3100,
+    });
+
+    return reply.send(result);
   });
 }

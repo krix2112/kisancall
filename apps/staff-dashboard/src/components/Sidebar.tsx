@@ -18,6 +18,7 @@ const ROLE_PERMISSIONS: Record<string, UserRole[]> = {
 
 const navItems = [
   { href: '/', label: 'Today Overview', icon: '📊' },
+  { href: '/mandi-prices', label: 'Mandi Prices', icon: '📈' },
   { href: '/arrivals', label: 'Arrivals', icon: '🚛' },
   { href: '/live-queue', label: 'Live Queue', icon: '⏱️' },
   { href: '/procurement-entry', label: 'Procurement Entry', icon: '📝' },

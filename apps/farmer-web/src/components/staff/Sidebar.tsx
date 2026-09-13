@@ -11,6 +11,7 @@ const navItems = [
   { href: '/staff/live-queue', label: 'Live Queue', icon: '⏱️' },
   { href: '/staff/procurement-entry', label: 'Procurement Entry', icon: '📝' },
   { href: '/staff/payments', label: 'Payments', icon: '💳' },
+  { href: '/staff/mandi-prices', label: 'Mandi Prices', icon: '📈' },
   { href: '/staff/call-console', label: 'Call Console', icon: '📞' },
   { href: '/staff/proof-audit', label: 'Proof & Audit', icon: '⛓️' },
   { href: '/staff/admin-console', label: 'Admin Console', icon: '⚙️', adminOnly: true },

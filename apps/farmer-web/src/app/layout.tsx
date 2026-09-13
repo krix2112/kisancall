@@ -6,6 +6,8 @@ export const metadata = {
   description: 'KisanCall bridges Indian farmers and mandi procurement centres with scheduled arrival slots, real-time queue visibility, tamper-evident digital weighing, and direct DBT tracking.',
 };
 
+import VoiceAssistantWidget from '@/components/VoiceAssistantWidget';
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className="scroll-smooth">
@@ -19,6 +21,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body className="bg-stonebg-50 text-charcoal-900 antialiased selection:bg-brand-800 selection:text-white min-h-screen">
         {children}
+        <VoiceAssistantWidget />
       </body>
     </html>
   );

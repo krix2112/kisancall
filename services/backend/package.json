@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@kisancall/shared-types": "workspace:*",
+    "@kisancall/voice-pipeline": "workspace:*",
     "@supabase/supabase-js": "^2.39.8",
     "dotenv": "^16.4.5",
     "ethers": "^6.17.0",

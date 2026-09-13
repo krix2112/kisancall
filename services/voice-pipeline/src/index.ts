@@ -66,4 +66,6 @@ export const executeVoiceTurn = async (
   };
 };
 
+export { GroqLLMClient, groqLLM } from './llm/groqClient';
+
 console.log('⚡ Voice Pipeline Orchestration Service initialized (USE_MOCK_TOOLS=' + (process.env.USE_MOCK_TOOLS !== 'false') + ')');

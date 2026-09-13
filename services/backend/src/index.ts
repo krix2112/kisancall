@@ -3,6 +3,7 @@ import Fastify, { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
 // supabase.ts validates env vars on import — app crashes here if any are missing
 import './supabase.js';
 
+import querystring from 'querystring';
 import { authGuard } from './auth.js';
 import { farmerRoutes } from './routes/farmers.js';
 import { bookingRoutes } from './routes/bookings.js';
@@ -13,6 +14,16 @@ import { proofRoutes } from './routes/proof.js';
 import { voiceRoutes } from './routes/voice.js';
 
 const fastify = Fastify({ logger: true });
+
+// Twilio webhook url-encoded form body parser
+fastify.addContentTypeParser('application/x-www-form-urlencoded', { parseAs: 'string' }, (req, body, done) => {
+  try {
+    const parsed = querystring.parse(body as string);
+    done(null, parsed);
+  } catch (err: any) {
+    done(err, undefined);
+  }
+});
 
 // ============================================================
 // Global error handler — consistent JSON error shapes, no stack leaks

@@ -12,10 +12,16 @@ export interface QueueResult {
 }
 
 export interface PriceResult {
+  commodity?: string;
+  variety?: string;
   minPrice: number;
   maxPrice: number;
   modalPrice: number;
   date: string;
+  dateDisplay?: string;
+  dateDisplayHi?: string;
+  isToday?: boolean;
+  stale?: boolean;
   source: string;
 }
 
@@ -44,8 +50,10 @@ export const mockToolClient = {
     };
   },
 
-  getPrice: async (mandiId: string, commodity: string = 'wheat'): Promise<PriceResult> => {
+  getPrice: async (mandiId: string, commodity: string = 'wheat', variety?: string): Promise<PriceResult> => {
     return {
+      commodity: 'Wheat',
+      variety: variety || 'FAQ / Standard',
       minPrice: 2150,
       maxPrice: 2350,
       modalPrice: 2275,

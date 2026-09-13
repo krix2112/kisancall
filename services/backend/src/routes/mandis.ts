@@ -29,6 +29,31 @@ export async function mandiRoutes(fastify: FastifyInstance): Promise<void> {
   });
 
   /**
+   * GET /mandis/analytics/market-intelligence
+   * Query parameters: mandi, commodity, days
+   */
+  fastify.get('/mandis/analytics/market-intelligence', async (request, reply) => {
+    const query = (request.query as Record<string, string>) || {};
+    const mandi = query.mandi || 'Sehore';
+    const commodity = query.commodity || 'Wheat';
+    const days = parseInt(query.days || '60', 10);
+
+    const { computeMarketIntelligence } = await import('../services/priceAnalytics.js');
+    const result = await computeMarketIntelligence(mandi, commodity, days);
+    return reply.send(result);
+  });
+
+  /**
+   * GET /mandis/analytics/ticker
+   * Returns live ticker pills for top marquee ribbon
+   */
+  fastify.get('/mandis/analytics/ticker', async (_request, reply) => {
+    const { getMarketTicker } = await import('../services/priceAnalytics.js');
+    const ticker = await getMarketTicker();
+    return reply.send(ticker);
+  });
+
+  /**
    * GET /mandis/:id — Fetch single mandi details with real stored coordinates
    */
   fastify.get('/mandis/:id', async (request, reply) => {
@@ -89,3 +114,4 @@ export async function mandiRoutes(fastify: FastifyInstance): Promise<void> {
     });
   });
 }
+

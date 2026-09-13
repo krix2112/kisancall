@@ -14,6 +14,7 @@ const ROLE_PERMISSIONS: Record<string, UserRole[]> = {
   '/staff/live-queue': ['operator', 'supervisor', 'admin'],
   '/staff/procurement-entry': ['operator', 'supervisor', 'admin'],
   '/staff/payments': ['operator', 'supervisor', 'admin'],
+  '/staff/mandi-prices': ['operator', 'supervisor', 'admin'],
   '/staff/call-console': ['operator', 'supervisor', 'admin'],
   '/staff/proof-audit': ['operator', 'supervisor', 'admin'],
 };
